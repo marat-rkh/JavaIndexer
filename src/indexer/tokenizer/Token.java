@@ -1,3 +1,5 @@
+package indexer.tokenizer;
+
 /**
  * Created by mrx on 26.09.14.
  */
