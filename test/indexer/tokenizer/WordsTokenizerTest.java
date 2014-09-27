@@ -20,6 +20,7 @@ public class WordsTokenizerTest {
         } catch (IOException e) {
             fail("IOException has been thrown");
         }
+        reader.close();
         List<Word> expected = Arrays.asList(new Word("First"), new Word("test"), new Word("for"), new Word("tokenizer"));
         assertEquals(tokens, expected);
     }
