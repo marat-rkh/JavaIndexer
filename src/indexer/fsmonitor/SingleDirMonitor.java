@@ -19,25 +19,14 @@ public class SingleDirMonitor implements FSMonitor {
     private final Map<WatchKey, Path> keyPathMap = new HashMap<WatchKey, Path>();
     private final FSEventsHandler fsEventsHandler;
 
-    public SingleDirMonitor(FSEventsHandler fsEventsHandler)
+    public SingleDirMonitor(FSEventsHandler fsEventsHandler, Path directory)
             throws IOException {
         this.watchService = FileSystems.getDefault().newWatchService();
         this.fsEventsHandler = fsEventsHandler;
-    }
-
-    @Override
-    public boolean registerTarget(Path pathToTarget) throws IOException {
-        if(pathToTarget != null) {
-            Files.walkFileTree(pathToTarget, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    register(dir);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-            return true;
+        if(directory == null) {
+            throw new IllegalArgumentException("directory must not be null");
         }
-        return false;
+        registerDirectory(directory);
     }
 
     @Override
@@ -70,6 +59,16 @@ public class SingleDirMonitor implements FSMonitor {
         } catch (IOException e) {
 
         }
+    }
+
+    private void registerDirectory(Path pathToTarget) throws IOException {
+        Files.walkFileTree(pathToTarget, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                register(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     private void register(Path pathToTarget) throws IOException {
@@ -128,7 +127,7 @@ public class SingleDirMonitor implements FSMonitor {
     private void handleCreateEvent(Path path) {
         try {
             if(Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-                registerTarget(path);
+                registerDirectory(path);
             }
             System.out.println("Created: " + path.toString());
         } catch (IOException x) {
