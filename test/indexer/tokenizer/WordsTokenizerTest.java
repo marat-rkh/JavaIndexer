@@ -1,5 +1,7 @@
 package indexer.tokenizer;
 
+import org.junit.Test;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -9,7 +11,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class WordsTokenizerTest {
-    @org.junit.Test
+    @Test
     public void testTokenize() throws Exception {
         Tokenizer wordTokenizer = new WordsTokenizer();
         String input = "First test for tokenizer";

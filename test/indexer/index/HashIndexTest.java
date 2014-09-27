@@ -22,8 +22,8 @@ public class HashIndexTest {
     @Test
     public void testAddAndSearch() throws Exception {
         Index hashIndex = new HashIndex(tokenizer);
-        String loremFilePath = createLoremTestFile();
-        hashIndex.addFile(loremFilePath);
+        File loremFile = createLoremTestFile();
+        hashIndex.addFile(loremFile.getAbsolutePath());
         assertTrue(hashIndex.search(new Word("Lorem")).size() == 1);
         assertTrue(hashIndex.search(new Word("in")).size() == 1);
         assertTrue(hashIndex.search(new Word("notInFile")).size() == 0);
@@ -32,12 +32,26 @@ public class HashIndexTest {
     @Test
     public void testContainsFile() throws Exception {
         Index hashIndex = new HashIndex(tokenizer);
-        String loremFilePath = createLoremTestFile();
+        File loremFile = createLoremTestFile();
+        String loremFilePath = loremFile.getAbsolutePath();
         hashIndex.addFile(loremFilePath);
         assertTrue(hashIndex.containsFile(loremFilePath));
     }
 
-    private String createLoremTestFile() {
+    @Test
+    public void testRemoveFileReadingDisk() throws Exception {
+        Index hashIndex = new HashIndex(tokenizer);
+        File loremFile = createLoremTestFile();
+        String loremFilePath = loremFile.getAbsolutePath();
+        hashIndex.addFile(loremFilePath);
+        assertTrue(hashIndex.containsFile(loremFilePath));
+        assertTrue(hashIndex.search(new Word("Lorem")).size() == 1);
+        hashIndex.removeFile(loremFilePath);
+        assertTrue(!hashIndex.containsFile(loremFilePath));
+        assertTrue(hashIndex.search(new Word("Lorem")).size() == 0);
+    }
+
+    private File createLoremTestFile() {
         final String LOREM_TEXT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do\n" +
                 "eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
                 "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
@@ -48,7 +62,7 @@ public class HashIndexTest {
             FileWriter fileWriter = new FileWriter(loremTest.getAbsoluteFile());
             fileWriter.write(LOREM_TEXT);
             fileWriter.close();
-            return loremTest.getAbsolutePath();
+            return loremTest;
         } catch (IOException e) {
             return null;
         }
