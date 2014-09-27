@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by mrx on 27.09.14.
  */
-public class HashIndex implements Index {
+public class HashFileIndex implements FileIndex {
     private final Map<Token, HashSet<Long>> tokenFilesMap = new HashMap<Token, HashSet<Long>>();
     private final Map<Long, String> idFileMap = new HashMap<Long, String>();
     private final Map<String, Long> fileIdMap = new HashMap<String, Long>();
@@ -22,7 +22,7 @@ public class HashIndex implements Index {
 
     private final Tokenizer tokenizer;
 
-    public HashIndex(Tokenizer tokenizer) {
+    public HashFileIndex(Tokenizer tokenizer) {
         this.tokenizer = tokenizer;
     }
 

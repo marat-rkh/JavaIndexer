@@ -1,6 +1,6 @@
 package indexer.fsmonitor;
 
-import indexer.FSEventsHandler;
+import indexer.handler.IndexEventsHandler;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -17,14 +17,14 @@ import static java.nio.file.StandardWatchEventKinds.*;
 public class SingleDirMonitor implements FSMonitor {
     private final WatchService watchService;
     private final Map<WatchKey, Path> keyPathMap = new HashMap<WatchKey, Path>();
-    private final FSEventsHandler fsEventsHandler;
+    private final IndexEventsHandler indexEventsHandler;
 
-    public SingleDirMonitor(FSEventsHandler fsEventsHandler, Path directory)
-            throws IOException {
+    public SingleDirMonitor(IndexEventsHandler indexEventsHandler, Path directory)
+            throws Exception {
         this.watchService = FileSystems.getDefault().newWatchService();
-        this.fsEventsHandler = fsEventsHandler;
-        if(directory == null) {
-            throw new IllegalArgumentException("directory must not be null");
+        this.indexEventsHandler = indexEventsHandler;
+        if(directory == null || !Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS)) {
+            throw new Exception("passed directory is not correct: it is a file or null");
         }
         registerDirectory(directory);
     }
@@ -130,14 +130,17 @@ public class SingleDirMonitor implements FSMonitor {
                 registerDirectory(path);
             }
             System.out.println("Created: " + path.toString());
+            indexEventsHandler.onFilesAddedEvent(path);
         } catch (IOException x) {
             // registration failed
         }
     }
     private void handleDeleteEvent(Path path) {
         System.out.println("Deleted: " + path.toString());
+        indexEventsHandler.onFilesRemovedEvent(path);
     }
     private void handleModifyEvent(Path path) {
         System.out.println("Modified: " + path.toString());
+        indexEventsHandler.onFilesModifiedEvent(path);
     }
 }

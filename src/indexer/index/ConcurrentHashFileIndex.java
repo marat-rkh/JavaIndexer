@@ -11,12 +11,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Created by mrx on 27.09.14.
  */
-public class ConcurrentHashIndex implements Index {
-    private final HashIndex index;
+public class ConcurrentHashFileIndex implements FileIndex {
+    private final HashFileIndex index;
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    public ConcurrentHashIndex(Tokenizer tokenizer) {
-        this.index = new HashIndex(tokenizer);
+    public ConcurrentHashFileIndex(Tokenizer tokenizer) {
+        this.index = new HashFileIndex(tokenizer);
     }
 
     @Override

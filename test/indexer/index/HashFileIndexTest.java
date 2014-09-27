@@ -13,7 +13,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.*;
 
-public class HashIndexTest {
+public class HashFileIndexTest {
     private Tokenizer tokenizer = new WordsTokenizer();
 
     //todo: tmp is not cleared
@@ -22,65 +22,65 @@ public class HashIndexTest {
 
     @Test
     public void testAddAndSearch() throws Exception {
-        Index hashIndex = new HashIndex(tokenizer);
+        FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         File loremFile = createLoremTestFile();
-        hashIndex.addFile(loremFile.getAbsolutePath());
-        assertTrue(hashIndex.search(new Word("Lorem")).size() == 1);
-        assertTrue(hashIndex.search(new Word("in")).size() == 1);
-        assertTrue(hashIndex.search(new Word("notInFile")).size() == 0);
+        hashFileIndex.addFile(loremFile.getAbsolutePath());
+        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("in")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("notInFile")).size() == 0);
     }
 
     @Test
     public void testContainsFile() throws Exception {
-        Index hashIndex = new HashIndex(tokenizer);
+        FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         File loremFile = createLoremTestFile();
         String loremFilePath = loremFile.getAbsolutePath();
-        hashIndex.addFile(loremFilePath);
-        assertTrue(hashIndex.containsFile(loremFilePath));
+        hashFileIndex.addFile(loremFilePath);
+        assertTrue(hashFileIndex.containsFile(loremFilePath));
     }
 
     @Test
     public void testRemoveFileReadingDisk() throws Exception {
-        Index hashIndex = new HashIndex(tokenizer);
+        FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         File loremFile = createLoremTestFile();
         String loremFilePath = loremFile.getAbsolutePath();
-        hashIndex.addFile(loremFilePath);
-        assertTrue(hashIndex.containsFile(loremFilePath));
-        assertTrue(hashIndex.search(new Word("Lorem")).size() == 1);
-        hashIndex.removeFile(loremFilePath);
-        assertTrue(!hashIndex.containsFile(loremFilePath));
-        assertTrue(hashIndex.search(new Word("Lorem")).size() == 0);
+        hashFileIndex.addFile(loremFilePath);
+        assertTrue(hashFileIndex.containsFile(loremFilePath));
+        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
+        hashFileIndex.removeFile(loremFilePath);
+        assertTrue(!hashFileIndex.containsFile(loremFilePath));
+        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 0);
     }
 
     @Test
     public void testRemoveFileIteratingAll() throws Exception {
-        Index hashIndex = new HashIndex(tokenizer);
+        FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         File loremFile = createLoremTestFile();
         String loremFilePath = loremFile.getAbsolutePath();
-        hashIndex.addFile(loremFilePath);
-        assertTrue(hashIndex.containsFile(loremFilePath));
-        assertTrue(hashIndex.search(new Word("Lorem")).size() == 1);
+        hashFileIndex.addFile(loremFilePath);
+        assertTrue(hashFileIndex.containsFile(loremFilePath));
+        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
         if(!loremFile.delete()) {
             fail("Manual deleting problem occurred");
         }
-        hashIndex.removeFile(loremFilePath);
-        assertTrue(!hashIndex.containsFile(loremFilePath));
-        assertTrue(hashIndex.search(new Word("Lorem")).size() == 0);
+        hashFileIndex.removeFile(loremFilePath);
+        assertTrue(!hashFileIndex.containsFile(loremFilePath));
+        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 0);
     }
 
     @Test
     public void testHandleFileModification() throws Exception {
-        Index hashIndex = new HashIndex(tokenizer);
+        FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         File loremFile = createLoremTestFile();
         String loremFilePath = loremFile.getAbsolutePath();
-        hashIndex.addFile(loremFilePath);
-        assertTrue(hashIndex.containsFile(loremFilePath));
-        assertTrue(hashIndex.search(new Word("Lorem")).size() == 1);
+        hashFileIndex.addFile(loremFilePath);
+        assertTrue(hashFileIndex.containsFile(loremFilePath));
+        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
         appendTextToFile(loremFile, "appendix");
-        hashIndex.handleFileModification(loremFilePath);
-        assertTrue(hashIndex.containsFile(loremFilePath));
-        assertTrue(hashIndex.search(new Word("Lorem")).size() == 1);
-        assertTrue(hashIndex.search(new Word("appendix")).size() == 1);
+        hashFileIndex.handleFileModification(loremFilePath);
+        assertTrue(hashFileIndex.containsFile(loremFilePath));
+        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("appendix")).size() == 1);
     }
 
     private File createLoremTestFile() {

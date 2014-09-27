@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Created by mrx on 26.09.14.
  */
-public interface Index {
+public interface FileIndex {
     public List<String> search(Token tokenToFind);
 
     public void addFile(String filePath) throws IOException;
