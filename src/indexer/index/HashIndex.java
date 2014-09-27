@@ -59,7 +59,7 @@ public class HashIndex implements Index {
             List<Token> tokens = tokenizer.tokenize(reader);
             reader.close();
             fileIdMap.put(lastAddedFileId.incrementAndGet(), filePath);
-            putTokensToMap(tokens);
+            putTokensToMaps(tokens, filePath);
         }
     }
 
@@ -78,16 +78,21 @@ public class HashIndex implements Index {
         return fileTokensMap.containsKey(filePath);
     }
 
-    private void putTokensToMap(List<Token> tokens) {
+    private void putTokensToMaps(List<Token> tokens, String filePath) {
         for(Token tokenToAdd : tokens) {
-            HashSet<Long> value = tokenFilesMap.get(tokenToAdd);
-            if(value == null) {
-                value = new HashSet<Long>();
-                value.add(lastAddedFileId.get());
-                tokenFilesMap.put(tokenToAdd, value);
-            } else {
-                value.add(lastAddedFileId.get());
-            }
+            putInMap(fileTokensMap, filePath, tokenToAdd);
+            putInMap(tokenFilesMap, tokenToAdd, lastAddedFileId.get());
+        }
+    }
+
+    private <K, E> void putInMap(Map<K, HashSet<E>> map, K key, E newHashSetEntry) {
+        HashSet<E> currentValue = map.get(key);
+        if(currentValue == null) {
+            currentValue = new HashSet<E>();
+            currentValue.add(newHashSetEntry);
+            map.put(key, currentValue);
+        } else {
+            currentValue.add(newHashSetEntry);
         }
     }
 }

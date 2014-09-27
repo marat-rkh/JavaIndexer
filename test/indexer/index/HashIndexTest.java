@@ -14,12 +14,13 @@ import java.io.IOException;
 import static org.junit.Assert.*;
 
 public class HashIndexTest {
+    private Tokenizer tokenizer = new WordsTokenizer();
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
     @Test
     public void testAddAndSearch() throws Exception {
-        Tokenizer tokenizer = new WordsTokenizer();
         Index hashIndex = new HashIndex(tokenizer);
         String loremFilePath = createLoremTestFile();
         hashIndex.addFile(loremFilePath);
@@ -30,7 +31,10 @@ public class HashIndexTest {
 
     @Test
     public void testContainsFile() throws Exception {
-
+        Index hashIndex = new HashIndex(tokenizer);
+        String loremFilePath = createLoremTestFile();
+        hashIndex.addFile(loremFilePath);
+        assertTrue(hashIndex.containsFile(loremFilePath));
     }
 
     private String createLoremTestFile() {
