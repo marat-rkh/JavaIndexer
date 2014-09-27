@@ -73,8 +73,9 @@ public class HashIndex implements Index {
     }
 
     @Override
-    public void handleFileModification(String filePath) {
-
+    public void handleFileModification(String filePath) throws IOException {
+        removeFile(filePath);
+        addFile(filePath);
     }
 
     @Override
