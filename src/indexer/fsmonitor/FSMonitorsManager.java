@@ -5,6 +5,7 @@ import indexer.handler.IndexEventsHandler;
 import indexer.utils.PathUtils;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,18 +18,21 @@ public class FSMonitorsManager {
     private final Map<Path, FSMonitor> monitors = new HashMap<Path, FSMonitor>();
     private final IndexEventsHandler indexEventsHandler;
     private final FSMonitorLifecycleHandler monitorLifecycleHandler;
+    private final OutputStream traceStream;
 
     private boolean errorOccurred = false;
 
-    public FSMonitorsManager(IndexEventsHandler indexEventsHandler, FSMonitorLifecycleHandler monitorHandler) {
+    public FSMonitorsManager(IndexEventsHandler indexEventsHandler, FSMonitorLifecycleHandler monitorHandler,
+                             OutputStream traceStream) {
         this.indexEventsHandler = indexEventsHandler;
         this.monitorLifecycleHandler = monitorHandler;
+        this.traceStream = traceStream;
     }
 
     public synchronized boolean addMonitor(Path directory, int restartsCounter) throws IOException {
         if(addingIsNeeded(directory)) {
             try {
-                final FSMonitor newMonitor = new SingleDirMonitor(directory, indexEventsHandler);
+                FSMonitor newMonitor = new SingleDirMonitor(directory, indexEventsHandler, traceStream);
                 monitors.put(directory, newMonitor);
                 Thread monitorThread = new Thread(new MonitorRunner(newMonitor, restartsCounter));
                 monitorThread.start();
@@ -40,8 +44,14 @@ public class FSMonitorsManager {
         return true;
     }
 
-    public synchronized boolean removeMonitor(Path directory) {
-        return monitors.remove(directory) != null;
+    public synchronized boolean removeMonitor(Path directory) throws IOException {
+        FSMonitor monitor = monitors.get(directory);
+        if(monitor != null) {
+            monitor.stopMonitoring();
+            monitors.remove(directory);
+            return true;
+        }
+        return false;
     }
 
     public synchronized void stopAllMonitors() throws IOException {
@@ -85,7 +95,7 @@ public class FSMonitorsManager {
             } catch (NotHandledEventException e) {
                 restartsCounter -= 1;
                 try {
-                    if (restartsCounter > 0) {
+                    if (restartsCounter >= 0) {
                         monitorLifecycleHandler.onMonitorRestart(monitor.getDirectory());
                         run();
                     } else {

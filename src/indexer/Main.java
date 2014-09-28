@@ -8,6 +8,7 @@ import indexer.tokenizer.WordsTokenizer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -16,32 +17,35 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         showHelp();
-        try (FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer());
+        try (FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), System.out);
              BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             while (true) {
-                System.out.print("Enter command: ");
+                System.out.println("Enter command:");
                 String input = br.readLine();
                 String[] command = input.split(" ");
-                switch (command[0]) {
-                    case "a":
-                        addCommand(fsIndexer, command[1]);
-                        break;
-                    case "r":
-                        removeCommand(fsIndexer, command[1]);
-                        break;
-                    case "s":
-                        searchCommand(fsIndexer, command[1]);
-                        break;
-                    case "c":
-                        containsCommand(fsIndexer, command[1]);
-                        break;
-                    case "h":
-                        showHelp();
-                        break;
-                    case "q":
-                        return;
-                    default:
-                        showUnknownCommandMsg();
+                if (command[0].equals("h")) {
+                    showHelp();
+                } else if (command[0].equals("q")) {
+                    return;
+                } else if (command.length >= 2) {
+                    switch (command[0]) {
+                        case "a":
+                            addCommand(fsIndexer, command[1]);
+                            break;
+                        case "r":
+                            removeCommand(fsIndexer, command[1]);
+                            break;
+                        case "s":
+                            searchCommand(fsIndexer, command[1]);
+                            break;
+                        case "c":
+                            containsCommand(fsIndexer, command[1]);
+                            break;
+                        default:
+                            showUnknownCommandMsg();
+                    }
+                } else {
+                    showUnknownCommandMsg();
                 }
             }
         } catch (IOException e) {
@@ -67,18 +71,24 @@ public class Main {
     private static void addCommand(FSIndexer fsIndexer, String file)
             throws IndexClosedException, IOException, InconsistentIndexException {
         fsIndexer.add(file);
+        System.out.println("Added: " + file);
     }
 
     private static void removeCommand(FSIndexer fsIndexer, String file)
             throws IndexClosedException, IOException, InconsistentIndexException {
         fsIndexer.remove(file);
+        System.out.println("Removed: " + file);
     }
 
     private static void searchCommand(FSIndexer fsIndexer, String what)
             throws IndexClosedException, InconsistentIndexException {
         List<String> files = fsIndexer.search(new Word(what));
-        for(String f : files) {
-            System.out.println(f);
+        if(files != null && files.size() != 0) {
+            for (String f : files) {
+                System.out.println(f);
+            }
+        } else {
+            System.out.println("No files found");
         }
     }
 

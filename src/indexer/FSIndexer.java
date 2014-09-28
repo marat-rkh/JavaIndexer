@@ -13,6 +13,7 @@ import indexer.tokenizer.Token;
 import indexer.tokenizer.Tokenizer;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -36,11 +37,11 @@ public class FSIndexer implements AutoCloseable {
 
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    public FSIndexer(Tokenizer tokenizer) {
+    public FSIndexer(Tokenizer tokenizer, OutputStream traceStream) {
         fileIndex = new ConcurrentHashFileIndex(tokenizer);
         indexUpdater = new IndexUpdater(fileIndex);
         indexMonitorHandler = new IndexMonitorHandler(indexUpdater);
-        monitorsManager = new FSMonitorsManager(indexUpdater, indexMonitorHandler);
+        monitorsManager = new FSMonitorsManager(indexUpdater, indexMonitorHandler, traceStream);
     }
 
     public List<String> search(Token tokenToFind) throws IndexClosedException, InconsistentIndexException {

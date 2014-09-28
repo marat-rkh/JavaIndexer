@@ -12,7 +12,7 @@ public class FSMonitorsManagerTest extends TmpFsCreator{
     @Test
     public void testAddRemoveMonitors() throws Exception {
         TestEventsHandler handler = new TestEventsHandler();
-        FSMonitorsManager manager = new FSMonitorsManager(handler, new TestMonitorHandler());
+        FSMonitorsManager manager = new FSMonitorsManager(handler, new TestMonitorHandler(), null);
         assertTrue(manager.addMonitor(dir1.toPath(), 0));
         assertTrue(manager.addMonitor(dir1.toPath(), 0));
         assertTrue(manager.addMonitor(tempFolder.getRoot().toPath(), 0));

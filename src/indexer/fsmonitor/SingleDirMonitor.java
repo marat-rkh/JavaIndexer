@@ -4,6 +4,7 @@ import indexer.exceptions.NotHandledEventException;
 import indexer.handler.IndexEventsHandler;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ public class SingleDirMonitor implements FSMonitor {
     private final WatchService watchService;
     private final Map<WatchKey, Path> keyPathMap = new HashMap<WatchKey, Path>();
     private final IndexEventsHandler indexEventsHandler;
+    private OutputStream traceStream = null;
 
     /**
      *
@@ -39,6 +41,12 @@ public class SingleDirMonitor implements FSMonitor {
             throw new NotDirectoryException(directory.toFile().getAbsolutePath());
         }
         registerDirectory(directory);
+    }
+
+    public SingleDirMonitor(Path directory, IndexEventsHandler indexEventsHandler, OutputStream traceStream)
+            throws IOException {
+        this(directory, indexEventsHandler);
+        this.traceStream = traceStream;
     }
 
     @Override
@@ -119,6 +127,7 @@ public class SingleDirMonitor implements FSMonitor {
                 registerDirectory(path);
             }
             indexEventsHandler.onFilesAddedEvent(path);
+            traceIfPossible("FS event 'create': " + path.toString() + '\n');
         } catch (IOException e) {
             throw new NotHandledEventException("created directory registration failed due to IO error, details: " +
                     e.getMessage());
@@ -126,8 +135,20 @@ public class SingleDirMonitor implements FSMonitor {
     }
     private void handleDeleteEvent(Path path) throws NotHandledEventException {
         indexEventsHandler.onFilesRemovedEvent(path);
+        traceIfPossible("FS event 'delete': " + path.toString() + '\n');
     }
     private void handleModifyEvent(Path path) throws NotHandledEventException {
         indexEventsHandler.onFilesModifiedEvent(path);
+        traceIfPossible("FS event 'modify': " + path.toString() + '\n');
+    }
+
+    private void traceIfPossible(String msg) {
+        if(traceStream != null) {
+            try {
+                traceStream.write(msg.getBytes());
+            } catch (IOException e) {
+                // suppressed
+            }
+        }
     }
 }
