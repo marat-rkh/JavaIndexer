@@ -1,6 +1,7 @@
 package indexer.handler;
 
 import indexer.exceptions.InconsistentIndexException;
+import indexer.exceptions.NotHandledEventException;
 import indexer.index.FileIndex;
 
 import java.io.IOException;
@@ -21,7 +22,7 @@ public class IndexUpdater implements IndexEventsHandler {
     }
 
     @Override
-    public void onFilesAddedEvent(Path filePath) {
+    public void onFilesAddedEvent(Path filePath) throws NotHandledEventException {
         try {
             Files.walkFileTree(filePath, new SimpleFileVisitor<Path>() {
                 @Override
@@ -31,7 +32,7 @@ public class IndexUpdater implements IndexEventsHandler {
                 }
             });
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new NotHandledEventException("files adding failed due to IO error, details: " + e.getMessage());
         }
     }
 
@@ -45,11 +46,11 @@ public class IndexUpdater implements IndexEventsHandler {
     }
 
     @Override
-    public void onFilesModifiedEvent(Path filePath) {
+    public void onFilesModifiedEvent(Path filePath) throws NotHandledEventException {
         try {
             fileIndex.handleFileModification(filePath.toFile().getAbsolutePath());
         } catch (InconsistentIndexException e) {
-            e.printStackTrace();
+            throw new NotHandledEventException("index has become inconsistent while modification");
         }
     }
 }

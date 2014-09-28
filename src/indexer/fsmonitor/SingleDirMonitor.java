@@ -1,5 +1,6 @@
 package indexer.fsmonitor;
 
+import indexer.exceptions.NotHandledEventException;
 import indexer.handler.IndexEventsHandler;
 
 import java.io.IOException;
@@ -19,18 +20,27 @@ public class SingleDirMonitor implements FSMonitor {
     private final Map<WatchKey, Path> keyPathMap = new HashMap<WatchKey, Path>();
     private final IndexEventsHandler indexEventsHandler;
 
+    /**
+     *
+     * @param indexEventsHandler
+     * @param directory
+     * @throws NotDirectoryException, IOException
+     */
     public SingleDirMonitor(IndexEventsHandler indexEventsHandler, Path directory)
-            throws Exception {
+            throws IOException {
         this.watchService = FileSystems.getDefault().newWatchService();
         this.indexEventsHandler = indexEventsHandler;
-        if(directory == null || !Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS)) {
-            throw new Exception("passed directory is not correct: it is a file or null");
+        if(directory == null) {
+            throw new NotDirectoryException(null);
+        }
+        if(!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS)) {
+            throw new NotDirectoryException(directory.toFile().getAbsolutePath());
         }
         registerDirectory(directory);
     }
 
     @Override
-    public void startMonitoring() {
+    public void startMonitoring() throws NotHandledEventException {
         while (true) {
             WatchKey key;
             try {
@@ -53,12 +63,8 @@ public class SingleDirMonitor implements FSMonitor {
     }
 
     @Override
-    public void stopMonitoring() {
-        try {
-            watchService.close();
-        } catch (IOException e) {
-
-        }
+    public void stopMonitoring() throws IOException {
+        watchService.close();
     }
 
     private void registerDirectory(Path pathToTarget) throws IOException {
@@ -76,13 +82,11 @@ public class SingleDirMonitor implements FSMonitor {
         keyPathMap.put(key, pathToTarget);
     }
 
-    private void handleEvents(WatchKey key, Path registeredDir) {
+    private void handleEvents(WatchKey key, Path registeredDir) throws NotHandledEventException {
         for (WatchEvent<?> event : key.pollEvents()) {
             WatchEvent.Kind kind = event.kind();
             if (kind == OVERFLOW) {
-                // todo: index recreation may be needed
-                System.out.println("DEBUG: event overflow");
-                continue;
+                throw new NotHandledEventException("events overflow");
             }
             WatchEvent<Path> pathEvent = castWatchEvent(event);
             Path relativeChildPath = pathEvent.context();
@@ -102,20 +106,21 @@ public class SingleDirMonitor implements FSMonitor {
         return (WatchEvent<T>)event;
     }
 
-    private void handleCreateEvent(Path path) {
+    private void handleCreateEvent(Path path) throws NotHandledEventException {
         try {
             if(Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
                 registerDirectory(path);
             }
             indexEventsHandler.onFilesAddedEvent(path);
-        } catch (IOException x) {
-            // registration failed
+        } catch (IOException e) {
+            throw new NotHandledEventException("created directory registration failed due to IO error, details: " +
+                    e.getMessage());
         }
     }
-    private void handleDeleteEvent(Path path) {
+    private void handleDeleteEvent(Path path) throws NotHandledEventException {
         indexEventsHandler.onFilesRemovedEvent(path);
     }
-    private void handleModifyEvent(Path path) {
+    private void handleModifyEvent(Path path) throws NotHandledEventException {
         indexEventsHandler.onFilesModifiedEvent(path);
     }
 }
