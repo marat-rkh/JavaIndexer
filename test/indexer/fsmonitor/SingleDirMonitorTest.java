@@ -83,25 +83,4 @@ public class SingleDirMonitorTest extends TmpFsCreator {
         });
         monitorThread.start();
     }
-
-    private class TestEventsHandler implements IndexEventsHandler {
-        public final List<File> addedPaths = new ArrayList<File>();
-        public final List<File> removedPaths = new ArrayList<File>();
-        public final List<File> modifiedPaths = new ArrayList<File>();
-
-        @Override
-        public void onFilesAddedEvent(Path filePath) {
-            addedPaths.add(filePath.toFile());
-        }
-
-        @Override
-        public void onFilesRemovedEvent(Path filePath) {
-            removedPaths.add(filePath.toFile());
-        }
-
-        @Override
-        public void onFilesModifiedEvent(Path filePath) {
-            modifiedPaths.add(filePath.toFile());
-        }
-    }
 }
