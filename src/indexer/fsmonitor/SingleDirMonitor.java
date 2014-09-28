@@ -76,28 +76,6 @@ public class SingleDirMonitor implements FSMonitor {
         keyPathMap.put(key, pathToTarget);
     }
 
-//    private void handleRegistrationQueries() {
-//        Path pathToRegister = registrationQueue.poll();
-//        while (pathToRegister != null) {
-//            try {
-//                registerPath(pathToRegister);
-//            } catch (IOException e) {
-//                System.out.println("DEBUG: Some files are not registered");
-//            }
-//            pathToRegister = registrationQueue.poll();
-//        }
-//    }
-
-//    private void registerPath(Path path) throws IOException {
-//        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-//            @Override
-//            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-//                register(dir);
-//                return FileVisitResult.CONTINUE;
-//            }
-//        });
-//    }
-
     private void handleEvents(WatchKey key, Path registeredDir) {
         for (WatchEvent<?> event : key.pollEvents()) {
             WatchEvent.Kind kind = event.kind();

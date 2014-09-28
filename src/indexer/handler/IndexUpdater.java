@@ -40,7 +40,7 @@ public class IndexUpdater implements IndexEventsHandler {
             if (Files.isDirectory(filePath)) {
                 fileIndex.removeDirectory(filePath.toFile().getAbsolutePath());
             } else {
-                fileIndex.removeFile(filePath.toFile().getAbsolutePath());
+                fileIndex.removeFileIteratingAll(filePath.toFile().getAbsolutePath());
             }
         } catch (IOException e) {
             e.printStackTrace();

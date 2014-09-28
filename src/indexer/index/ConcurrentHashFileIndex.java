@@ -40,10 +40,20 @@ public class ConcurrentHashFileIndex implements FileIndex {
     }
 
     @Override
-    public void removeFile(String filePath) throws IOException {
+    public void removeFileIteratingAll(String filePath) throws IOException {
         readWriteLock.writeLock().lock();
         try {
-            index.removeFile(filePath);
+            index.removeFileIteratingAll(filePath);
+        } finally {
+            readWriteLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void removeFileReadingDisk(String filePath) throws IOException {
+        readWriteLock.writeLock().lock();
+        try {
+            index.removeFileReadingDisk(filePath);
         } finally {
             readWriteLock.writeLock().unlock();
         }

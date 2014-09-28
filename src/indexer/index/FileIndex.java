@@ -12,7 +12,8 @@ public interface FileIndex {
     public List<String> search(Token tokenToFind);
 
     public void addFile(String filePath) throws IOException;
-    public void removeFile(String filePath) throws IOException;
+    public void removeFileReadingDisk(String filePath) throws IOException;
+    public void removeFileIteratingAll(String filePath) throws IOException;
     public void handleFileModification(String filePath) throws IOException;
 
     public boolean containsFile(String filePath);

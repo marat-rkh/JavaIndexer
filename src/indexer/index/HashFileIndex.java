@@ -61,15 +61,36 @@ public class HashFileIndex implements FileIndex {
         }
     }
 
+//    // todo : split into 2 methods
+//    @Override
+//    public void removeFile(final String filePath) throws IOException {
+//        if(containsFile(filePath)) {
+//            Long fileId = fileIdMap.get(filePath);
+//            if(new File(filePath).canRead()) {
+//                removeReadingFromDisk(filePath, fileId);
+//            } else {
+//                removeIteratingAll(fileId);
+//            }
+//            idFileMap.remove(fileId);
+//            fileIdMap.remove(filePath);
+//        }
+//    }
+
     @Override
-    public void removeFile(final String filePath) throws IOException {
+    public void removeFileIteratingAll(String filePath) throws IOException {
         if(containsFile(filePath)) {
             Long fileId = fileIdMap.get(filePath);
-            if(new File(filePath).canRead()) {
-                removeReadingFromDisk(filePath, fileId);
-            } else {
-                removeIteratingAll(fileId);
-            }
+            removeIteratingAll(fileId);
+            idFileMap.remove(fileId);
+            fileIdMap.remove(filePath);
+        }
+    }
+
+    @Override
+    public void removeFileReadingDisk(String filePath) throws IOException {
+        if(containsFile(filePath)) {
+            Long fileId = fileIdMap.get(filePath);
+            removeReadingFromDisk(filePath, fileId);
             idFileMap.remove(fileId);
             fileIdMap.remove(filePath);
         }
@@ -78,7 +99,7 @@ public class HashFileIndex implements FileIndex {
     @Override
     public void handleFileModification(String filePath) throws IOException {
         if(containsFile(filePath)) {
-            removeFile(filePath);
+            removeFileIteratingAll(filePath);
             addFile(filePath);
         }
     }
