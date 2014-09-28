@@ -13,13 +13,37 @@ public class HashFileIndexTest extends TmpFsCreator {
     private Tokenizer tokenizer = new WordsTokenizer();
 
     @Test
-    public void testAddAndSearch() throws Exception {
+    public void testAddAndSearchSimple() throws Exception {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         hashFileIndex.addFile(file1.getAbsolutePath());
 
         assertTrue(hashFileIndex.search(new Word("file1")).size() == 1);
         assertTrue(hashFileIndex.search(new Word("content")).size() == 1);
         assertTrue(hashFileIndex.search(new Word("notInFile")).size() == 0);
+    }
+
+    @Test
+    public void testAddAndSearch() throws Exception {
+        FileIndex hashFileIndex = new HashFileIndex(tokenizer);
+        hashFileIndex.addFile(file1.getAbsolutePath());
+        hashFileIndex.addFile(file2.getAbsolutePath());
+        hashFileIndex.addFile(file3.getAbsolutePath());
+        hashFileIndex.addFile(dir1SubFile1.getAbsolutePath());
+        hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
+
+        assertTrue(hashFileIndex.search(new Word("file1")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("file2")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("file3")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("content")).size() == 3);
+        assertTrue(hashFileIndex.search(new Word("notInFile")).size() == 0);
+        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("ipsum")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("dolor")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("sit")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("amet,")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("consectetur")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("adipiscing")).size() == 1);
+        assertTrue(hashFileIndex.search(new Word("elit")).size() == 1);
     }
 
     @Test
