@@ -13,6 +13,8 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Created by mrx on 27.09.14.
@@ -24,6 +26,8 @@ public class FSIndexer {
 
     private boolean isClosed = false;
 
+    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+
     public FSIndexer(Tokenizer tokenizer) {
         fileIndex = new ConcurrentHashFileIndex(tokenizer);
         indexUpdater = new IndexUpdater(fileIndex);
@@ -31,38 +35,63 @@ public class FSIndexer {
     }
 
     public List<String> search(Token tokenToFind) throws Exception {
-        throwIfClosed();
-        return fileIndex.search(tokenToFind);
+        readWriteLock.readLock().lock();
+        try {
+            throwIfClosed();
+            return fileIndex.search(tokenToFind);
+        } finally {
+            readWriteLock.readLock().unlock();
+        }
     }
 
     public void add(String filePath) throws Exception {
-        throwIfClosed();
-        Path path = Paths.get(filePath);
-        indexUpdater.onFilesAddedEvent(path);
-        if(!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-            path = path.getParent();
+        readWriteLock.writeLock().lock();
+        try {
+            throwIfClosed();
+            Path path = Paths.get(filePath);
+            indexUpdater.onFilesAddedEvent(path);
+            if(!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
+                path = path.getParent();
+            }
+            monitorsManager.addMonitor(path);
+        } finally {
+            readWriteLock.writeLock().unlock();
         }
-        monitorsManager.addMonitor(path);
     }
 
     public void remove(String filePath) throws Exception {
-        throwIfClosed();
-        Path path = Paths.get(filePath);
-        indexUpdater.onFilesRemovedEvent(path);
-        if(!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-            path = path.getParent();
+        readWriteLock.writeLock().lock();
+        try {
+            throwIfClosed();
+            Path path = Paths.get(filePath);
+            indexUpdater.onFilesRemovedEvent(path);
+            if(!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
+                path = path.getParent();
+            }
+            monitorsManager.removeMonitor(path);
+        } finally {
+            readWriteLock.writeLock().unlock();
         }
-        monitorsManager.removeMonitor(path);
     }
 
     public boolean containsFile(String filePath) throws Exception {
-        throwIfClosed();
-        return fileIndex.containsFile(filePath);
+        readWriteLock.readLock().lock();
+        try {
+            throwIfClosed();
+            return fileIndex.containsFile(filePath);
+        } finally {
+            readWriteLock.readLock().unlock();
+        }
     }
 
     public void close() {
-        monitorsManager.stopAllMonitors();
-        isClosed = true;
+        readWriteLock.writeLock().lock();
+        try {
+            monitorsManager.stopAllMonitors();
+            isClosed = true;
+        } finally {
+            readWriteLock.writeLock().unlock();
+        }
     }
 
     private void throwIfClosed() throws Exception {
