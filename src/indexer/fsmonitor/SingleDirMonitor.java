@@ -107,18 +107,15 @@ public class SingleDirMonitor implements FSMonitor {
             if(Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
                 registerDirectory(path);
             }
-            System.out.println("Created: " + path.toString());
             indexEventsHandler.onFilesAddedEvent(path);
         } catch (IOException x) {
             // registration failed
         }
     }
     private void handleDeleteEvent(Path path) {
-        System.out.println("Deleted: " + path.toString());
         indexEventsHandler.onFilesRemovedEvent(path);
     }
     private void handleModifyEvent(Path path) {
-        System.out.println("Modified: " + path.toString());
         indexEventsHandler.onFilesModifiedEvent(path);
     }
 }
