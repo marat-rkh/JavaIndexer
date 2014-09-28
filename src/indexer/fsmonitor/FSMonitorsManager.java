@@ -19,7 +19,7 @@ public class FSMonitorsManager {
         this.indexEventsHandler = indexEventsHandler;
     }
 
-    public boolean addMonitor(Path directory) {
+    public synchronized boolean addMonitor(Path directory) {
         if(addingIsNeeded(directory)) {
             try {
                 final FSMonitor newMonitor = new SingleDirMonitor(indexEventsHandler, directory);
@@ -39,11 +39,11 @@ public class FSMonitorsManager {
         return true;
     }
 
-    public boolean removeMonitor(Path directory) {
+    public synchronized boolean removeMonitor(Path directory) {
         return monitors.remove(directory) != null;
     }
 
-    public void stopAllMonitors() {
+    public synchronized void stopAllMonitors() {
         for(FSMonitor fsMonitor : monitors.values()) {
             fsMonitor.stopMonitoring();
         }
