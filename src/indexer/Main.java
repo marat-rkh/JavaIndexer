@@ -1,69 +1,85 @@
 package indexer;
 
-import indexer.fsmonitor.FSMonitorsManager;
-import indexer.handler.IndexEventsHandler;
-import indexer.handler.IndexUpdater;
-import indexer.index.ConcurrentHashFileIndex;
-import indexer.index.FileIndex;
+import indexer.exceptions.IndexClosedException;
 import indexer.tokenizer.Word;
 import indexer.tokenizer.WordsTokenizer;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
 
 /**
  * Created by mrx on 27.09.14.
  */
 public class Main {
     public static void main(String[] args) {
-        FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer());
-        try {
-            fsIndexer.add("/home/mrx/Test");
-            System.out.println("Added");
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            br.readLine();
-            System.out.println("Done");
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            fsIndexer.close();
+        showHelp();
+        try (FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer());
+             BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+            while (true) {
+                String input = br.readLine();
+                String[] command = input.split(" ");
+                switch (command[0]) {
+                    case "a":
+                        addCommand(fsIndexer, command[1]);
+                        break;
+                    case "r":
+                        removeCommand(fsIndexer, command[1]);
+                        break;
+                    case "s":
+                        searchCommand(fsIndexer, command[1]);
+                        break;
+                    case "c":
+                        containsCommand(fsIndexer, command[1]);
+                        break;
+                    case "h":
+                        showHelp();
+                        break;
+                    case "q":
+                        return;
+                    default:
+                        showUnknownCommandMsg();
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error occurred. Details: " + e.getMessage());
+        } catch (IndexClosedException e) {
+            System.out.println("Strange situation - index has been closed");
         }
-//        try {
-//            Files.walkFileTree(Paths.get("/home/mrx/Test"), new SimpleFileVisitor<Path>() {
-//                @Override
-//                public FileVisitResult visitFile(Path dir, BasicFileAttributes attrs) throws IOException {
-//                    System.out.println(dir.toFile().getAbsolutePath());
-//                    return FileVisitResult.CONTINUE;
-//                }
-//            });
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        Path p1 = Paths.get("/home/mrx/");
-//        Path p2 = Paths.get("/home/mrx/t");
-//        System.out.println(p2.startsWith(p1));
     }
 
-    private static FileIndex fileIndex = new ConcurrentHashFileIndex(new WordsTokenizer());
-    private static IndexEventsHandler indexUpdater = new IndexUpdater(fileIndex);
+    private static void showHelp() {
+        final String help = "Commands:\n" +
+                "a <file_or_dir_path> - add file or dir to index" +
+                "r <file_or_dir_path> - remove file or dir from index" +
+                "s <word>             - get list of files containing <word>" +
+                "c <file_path>        - check if index contains file" +
+                "h                    - show this help" +
+                "q                    - finish work";
+        System.out.println(help);
+    }
 
-    private static IndexEventsHandler eventsPrinter = new IndexEventsHandler() {
-        @Override
-        public void onFilesAddedEvent(Path filePath) {
-            System.out.println("onCreateFile: " + filePath.toString());
+    private static void addCommand(FSIndexer fsIndexer, String file) throws IndexClosedException {
+        fsIndexer.add(file);
+    }
+
+    private static void removeCommand(FSIndexer fsIndexer, String file) throws IndexClosedException {
+        fsIndexer.remove(file);
+    }
+
+    private static void searchCommand(FSIndexer fsIndexer, String what) throws IndexClosedException {
+        List<String> files = fsIndexer.search(new Word(what));
+        for(String f : files) {
+            System.out.println(f);
         }
-        @Override
-        public void onFilesRemovedEvent(Path filePath) {
-            System.out.println("onRemoveFile: " + filePath.toString());
-        }
-        @Override
-        public void onFilesModifiedEvent(Path filePath) {
-            System.out.println("onModifyFile: " + filePath.toString());
-        }
-    };
+    }
+
+    private static void containsCommand(FSIndexer fsIndexer, String file) throws IndexClosedException {
+        System.out.println(fsIndexer.containsFile(file));
+    }
+
+    private static void showUnknownCommandMsg() {
+        System.out.println("Unknown command");
+    }
 }

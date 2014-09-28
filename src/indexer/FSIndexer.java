@@ -1,5 +1,6 @@
 package indexer;
 
+import indexer.exceptions.IndexClosedException;
 import indexer.fsmonitor.FSMonitorsManager;
 import indexer.handler.IndexEventsHandler;
 import indexer.handler.IndexUpdater;
@@ -19,7 +20,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Created by mrx on 27.09.14.
  */
-public class FSIndexer {
+public class FSIndexer implements AutoCloseable {
     private final FileIndex fileIndex;
     private final IndexEventsHandler indexUpdater;
     private final FSMonitorsManager monitorsManager;
@@ -34,7 +35,7 @@ public class FSIndexer {
         monitorsManager = new FSMonitorsManager(indexUpdater);
     }
 
-    public List<String> search(Token tokenToFind) throws Exception {
+    public List<String> search(Token tokenToFind) throws IndexClosedException {
         readWriteLock.readLock().lock();
         try {
             throwIfClosed();
@@ -44,7 +45,7 @@ public class FSIndexer {
         }
     }
 
-    public void add(String filePath) throws Exception {
+    public void add(String filePath) throws IndexClosedException {
         readWriteLock.writeLock().lock();
         try {
             throwIfClosed();
@@ -59,7 +60,7 @@ public class FSIndexer {
         }
     }
 
-    public void remove(String filePath) throws Exception {
+    public void remove(String filePath) throws IndexClosedException {
         readWriteLock.writeLock().lock();
         try {
             throwIfClosed();
@@ -74,7 +75,7 @@ public class FSIndexer {
         }
     }
 
-    public boolean containsFile(String filePath) throws Exception {
+    public boolean containsFile(String filePath) throws IndexClosedException {
         readWriteLock.readLock().lock();
         try {
             throwIfClosed();
@@ -94,9 +95,9 @@ public class FSIndexer {
         }
     }
 
-    private void throwIfClosed() throws Exception {
+    private void throwIfClosed() throws IndexClosedException {
         if(isClosed) {
-            throw new Exception("FSIndexer is closed");
+            throw new IndexClosedException();
         }
     }
 }
