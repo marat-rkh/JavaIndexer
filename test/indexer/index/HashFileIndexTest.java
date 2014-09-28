@@ -139,5 +139,12 @@ public class HashFileIndexTest extends TmpFsCreator {
         assertTrue(hashFileIndex.containsFile(file3.getAbsolutePath()));
         assertFalse(hashFileIndex.containsFile(dir1SubFile1.getAbsolutePath()));
         assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
+
+        hashFileIndex.removeDirectory(tempFolder.getRoot().getAbsolutePath());
+        assertFalse(hashFileIndex.containsFile(file1.getAbsolutePath()));
+        assertFalse(hashFileIndex.containsFile(file2.getAbsolutePath()));
+        assertFalse(hashFileIndex.containsFile(file3.getAbsolutePath()));
+        assertFalse(hashFileIndex.containsFile(dir1SubFile1.getAbsolutePath()));
+        assertFalse(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
     }
 }
