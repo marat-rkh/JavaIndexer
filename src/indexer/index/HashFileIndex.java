@@ -2,11 +2,14 @@ package indexer.index;
 
 import indexer.tokenizer.Token;
 import indexer.tokenizer.Tokenizer;
+import indexer.utils.PathUtils;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -85,6 +88,19 @@ public class HashFileIndex implements FileIndex {
         return fileIdMap.containsKey(filePath);
     }
 
+    @Override
+    public void removeDirectory(String dirPath) throws IOException {
+        Path path = Paths.get(dirPath);
+        Iterator<Map.Entry<Token, HashSet<Long>>> it = tokenFilesMap.entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry<Token, HashSet<Long>> entry = it.next();
+            removeChildren(path, entry.getValue());
+            if(entry.getValue().isEmpty()) {
+                it.remove();
+            }
+        }
+    }
+
     private List<Token> readTokens(String filePath) throws IOException {
         Reader reader = new FileReader(filePath);
         List<Token> tokens = tokenizer.tokenize(reader);
@@ -128,6 +144,16 @@ public class HashFileIndex implements FileIndex {
             Map.Entry<Token, HashSet<Long>> entry = it.next();
             entry.getValue().remove(fileId);
             if(entry.getValue().isEmpty()) {
+                it.remove();
+            }
+        }
+    }
+
+    private void removeChildren(Path parentPath, HashSet<Long> filesId) {
+        Iterator<Long> it = filesId.iterator();
+        while(it.hasNext()) {
+            Path filePath = Paths.get(idFileMap.get(it.next()));
+            if(!PathUtils.pathsAreEqual(parentPath, filePath) && PathUtils.firstPathIsParent(parentPath, filePath)) {
                 it.remove();
             }
         }

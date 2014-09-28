@@ -24,10 +24,8 @@ public class IndexUpdater implements IndexEventsHandler {
         try {
             Files.walkFileTree(filePath, new SimpleFileVisitor<Path>() {
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    if (!Files.isDirectory(dir)) {
-                        fileIndex.addFile(dir.toFile().getAbsolutePath());
-                    }
+                public FileVisitResult visitFile(Path dir, BasicFileAttributes attrs) throws IOException {
+                    fileIndex.addFile(dir.toFile().getAbsolutePath());
                     return FileVisitResult.CONTINUE;
                 }
             });
@@ -39,15 +37,11 @@ public class IndexUpdater implements IndexEventsHandler {
     @Override
     public void onFilesRemovedEvent(Path filePath) {
         try {
-            Files.walkFileTree(filePath, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    if (!Files.isDirectory(dir)) {
-                        fileIndex.removeFile(dir.toFile().getAbsolutePath());
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            if (Files.isDirectory(filePath)) {
+                fileIndex.removeDirectory(filePath.toFile().getAbsolutePath());
+            } else {
+                fileIndex.removeFile(filePath.toFile().getAbsolutePath());
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

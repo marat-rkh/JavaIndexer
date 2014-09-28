@@ -68,4 +68,14 @@ public class ConcurrentHashFileIndex implements FileIndex {
             readWriteLock.readLock().unlock();
         }
     }
+
+    @Override
+    public void removeDirectory(String dirPath) throws IOException {
+        readWriteLock.writeLock().lock();
+        try {
+            index.removeDirectory(dirPath);
+        } finally {
+            readWriteLock.writeLock().unlock();
+        }
+    }
 }

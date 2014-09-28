@@ -16,4 +16,6 @@ public interface FileIndex {
     public void handleFileModification(String filePath) throws IOException;
 
     public boolean containsFile(String filePath);
+
+    public void removeDirectory(String dirPath) throws IOException;
 }
