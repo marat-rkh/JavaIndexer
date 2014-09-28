@@ -8,7 +8,6 @@ import indexer.tokenizer.WordsTokenizer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -22,28 +21,13 @@ public class Main {
             while (true) {
                 System.out.println("Enter command:");
                 String input = br.readLine();
-                String[] command = input.split(" ");
+                String[] command = input.split(" ", 2);
                 if (command[0].equals("h")) {
                     showHelp();
                 } else if (command[0].equals("q")) {
                     return;
                 } else if (command.length >= 2) {
-                    switch (command[0]) {
-                        case "a":
-                            addCommand(fsIndexer, command[1]);
-                            break;
-                        case "r":
-                            removeCommand(fsIndexer, command[1]);
-                            break;
-                        case "s":
-                            searchCommand(fsIndexer, command[1]);
-                            break;
-                        case "c":
-                            containsCommand(fsIndexer, command[1]);
-                            break;
-                        default:
-                            showUnknownCommandMsg();
-                    }
+                    handleCommandWithArg(fsIndexer, command);
                 } else {
                     showUnknownCommandMsg();
                 }
@@ -66,6 +50,26 @@ public class Main {
                 "h                    - show this help\n" +
                 "q                    - finish work\n\n";
         System.out.println(help);
+    }
+
+    private static void handleCommandWithArg(FSIndexer fsIndexer, String[] command)
+            throws IndexClosedException, IOException, InconsistentIndexException {
+        switch (command[0]) {
+            case "a":
+                addCommand(fsIndexer, command[1]);
+                break;
+            case "r":
+                removeCommand(fsIndexer, command[1]);
+                break;
+            case "s":
+                searchCommand(fsIndexer, command[1]);
+                break;
+            case "c":
+                containsCommand(fsIndexer, command[1]);
+                break;
+            default:
+                showUnknownCommandMsg();
+        }
     }
 
     private static void addCommand(FSIndexer fsIndexer, String file)
