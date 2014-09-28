@@ -1,5 +1,6 @@
 package indexer.index;
 
+import indexer.exceptions.InconsistentIndexException;
 import indexer.tokenizer.Token;
 
 import java.io.IOException;
@@ -11,12 +12,12 @@ import java.util.List;
 public interface FileIndex {
     public List<String> search(Token tokenToFind);
 
-    public void addFile(String filePath) throws IOException;
-    public void removeFileReadingDisk(String filePath) throws IOException;
-    public void removeFileIteratingAll(String filePath) throws IOException;
-    public void handleFileModification(String filePath) throws IOException;
+    public boolean addFile(String filePath);
+    public boolean removeFileReadingDisk(String filePath);
+    public void removeFileIteratingAll(String filePath);
+    public boolean handleFileModification(String filePath) throws InconsistentIndexException;
 
     public boolean containsFile(String filePath);
 
-    public void removeDirectory(String dirPath) throws IOException;
+    public void removeDirectory(String dirPath);
 }

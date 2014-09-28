@@ -1,6 +1,7 @@
 package indexer.index;
 
 import indexer.TmpFsCreator;
+import indexer.exceptions.InconsistentIndexException;
 import indexer.tokenizer.Tokenizer;
 import indexer.tokenizer.Word;
 import indexer.tokenizer.WordsTokenizer;
@@ -14,7 +15,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     private Tokenizer tokenizer = new WordsTokenizer();
 
     @Test
-    public void testAddAndSearchSimple() throws Exception {
+    public void testAddAndSearchSimple() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         hashFileIndex.addFile(file1.getAbsolutePath());
 
@@ -24,7 +25,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     }
 
     @Test
-    public void testAddAndSearch() throws Exception {
+    public void testAddAndSearch() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         hashFileIndex.addFile(file1.getAbsolutePath());
         hashFileIndex.addFile(file2.getAbsolutePath());
@@ -48,7 +49,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     }
 
     @Test
-    public void testContainsFile() throws Exception {
+    public void testContainsFile() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         hashFileIndex.addFile(file1.getAbsolutePath());
 
@@ -57,7 +58,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     }
 
     @Test
-    public void testRemoveFileReadingDisk() throws Exception {
+    public void testRemoveFileReadingDisk() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
 
@@ -71,7 +72,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     }
 
     @Test
-    public void testRemoveFileIteratingAll() throws Exception {
+    public void testRemoveFileIteratingAll() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
 
@@ -88,7 +89,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     }
 
     @Test
-    public void testHandleFileModificationAppend() throws Exception {
+    public void testHandleFileModificationAppend() throws InconsistentIndexException {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
 
@@ -106,7 +107,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     }
 
     @Test
-    public void testHandleFileModificationReplace() throws Exception {
+    public void testHandleFileModificationReplace() throws InconsistentIndexException {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
 
@@ -125,7 +126,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     }
 
     @Test
-    public void testRemoveDirectory() throws Exception {
+    public void testRemoveDirectory() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
         hashFileIndex.addFile(file1.getAbsolutePath());
         hashFileIndex.addFile(file2.getAbsolutePath());

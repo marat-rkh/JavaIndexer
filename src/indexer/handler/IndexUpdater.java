@@ -1,5 +1,6 @@
 package indexer.handler;
 
+import indexer.exceptions.InconsistentIndexException;
 import indexer.index.FileIndex;
 
 import java.io.IOException;
@@ -36,14 +37,10 @@ public class IndexUpdater implements IndexEventsHandler {
 
     @Override
     public void onFilesRemovedEvent(Path filePath) {
-        try {
-            if (Files.isDirectory(filePath)) {
-                fileIndex.removeDirectory(filePath.toFile().getAbsolutePath());
-            } else {
-                fileIndex.removeFileIteratingAll(filePath.toFile().getAbsolutePath());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (Files.isDirectory(filePath)) {
+            fileIndex.removeDirectory(filePath.toFile().getAbsolutePath());
+        } else {
+            fileIndex.removeFileIteratingAll(filePath.toFile().getAbsolutePath());
         }
     }
 
@@ -51,7 +48,7 @@ public class IndexUpdater implements IndexEventsHandler {
     public void onFilesModifiedEvent(Path filePath) {
         try {
             fileIndex.handleFileModification(filePath.toFile().getAbsolutePath());
-        } catch (IOException e) {
+        } catch (InconsistentIndexException e) {
             e.printStackTrace();
         }
     }

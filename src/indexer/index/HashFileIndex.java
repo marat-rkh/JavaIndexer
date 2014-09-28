@@ -1,5 +1,6 @@
 package indexer.index;
 
+import indexer.exceptions.InconsistentIndexException;
 import indexer.tokenizer.Token;
 import indexer.tokenizer.Tokenizer;
 import indexer.utils.PathUtils;
@@ -9,7 +10,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -52,17 +52,21 @@ public class HashFileIndex implements FileIndex {
      * @throws IOException
      */
     @Override
-    public void addFile(String filePath) throws IOException {
+    public boolean addFile(String filePath) {
         if(!containsFile(filePath)) {
             List<Token> tokens = readTokens(filePath);
+            if(tokens == null) {
+                return false;
+            }
             idFileMap.put(lastAddedFileId.incrementAndGet(), filePath);
             fileIdMap.put(filePath, lastAddedFileId.get());
             putTokensToMaps(tokens, filePath);
         }
+        return true;
     }
 
     @Override
-    public void removeFileIteratingAll(String filePath) throws IOException {
+    public void removeFileIteratingAll(String filePath) {
         if(containsFile(filePath)) {
             Long fileId = fileIdMap.get(filePath);
             removeIteratingAll(fileId);
@@ -72,21 +76,30 @@ public class HashFileIndex implements FileIndex {
     }
 
     @Override
-    public void removeFileReadingDisk(String filePath) throws IOException {
+    public boolean removeFileReadingDisk(String filePath) {
         if(containsFile(filePath)) {
             Long fileId = fileIdMap.get(filePath);
-            removeReadingFromDisk(filePath, fileId);
+            if(!removeReadingFromDisk(filePath, fileId)) {
+                return false;
+            }
             idFileMap.remove(fileId);
             fileIdMap.remove(filePath);
         }
+        return true;
     }
 
     @Override
-    public void handleFileModification(String filePath) throws IOException {
-        if(containsFile(filePath)) {
-            removeFileIteratingAll(filePath);
-            addFile(filePath);
+    public boolean handleFileModification(String filePath) throws InconsistentIndexException {
+        if(new File(filePath).canRead()) {
+            if(containsFile(filePath)) {
+                removeFileIteratingAll(filePath);
+                if (!addFile(filePath)) {
+                    throw new InconsistentIndexException("IO error has made index inconsistent");
+                }
+            }
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -95,7 +108,7 @@ public class HashFileIndex implements FileIndex {
     }
 
     @Override
-    public void removeDirectory(String dirPath) throws IOException {
+    public void removeDirectory(String dirPath) {
         Path path = Paths.get(dirPath);
         Iterator<Map.Entry<Token, HashSet<Long>>> it = tokenFilesMap.entrySet().iterator();
         while(it.hasNext()) {
@@ -108,10 +121,13 @@ public class HashFileIndex implements FileIndex {
         removeFromFileIdMaps(path);
     }
 
-    private List<Token> readTokens(String filePath) throws IOException {
-        Reader reader = new FileReader(filePath);
-        List<Token> tokens = tokenizer.tokenize(reader);
-        reader.close();
+    private List<Token> readTokens(String filePath) {
+        List<Token> tokens;
+        try (Reader reader = new FileReader(filePath)) {
+            tokens = tokenizer.tokenize(reader);
+        } catch (IOException e) {
+            return null;
+        }
         return tokens;
     }
 
@@ -132,17 +148,21 @@ public class HashFileIndex implements FileIndex {
         }
     }
 
-    private void removeReadingFromDisk(String filePath, Long fileId) throws IOException {
+    private boolean removeReadingFromDisk(String filePath, Long fileId) {
         List<Token> tokens = readTokens(filePath);
-        for(Token tokenToRemove : tokens) {
-            Set<Long> files = tokenFilesMap.get(tokenToRemove);
-            if(files != null) {
-                files.remove(fileId);
-                if(files.isEmpty()) {
-                    tokenFilesMap.remove(tokenToRemove);
+        if(tokens != null) {
+            for (Token tokenToRemove : tokens) {
+                Set<Long> files = tokenFilesMap.get(tokenToRemove);
+                if (files != null) {
+                    files.remove(fileId);
+                    if (files.isEmpty()) {
+                        tokenFilesMap.remove(tokenToRemove);
+                    }
                 }
             }
+            return true;
         }
+        return false;
     }
 
     private void removeIteratingAll(Long fileId) {
@@ -167,14 +187,14 @@ public class HashFileIndex implements FileIndex {
     }
 
     private void removeFromFileIdMaps(Path path) {
-        Iterator<Map.Entry<String, Long>> filesIter = fileIdMap.entrySet().iterator();
-        while (filesIter.hasNext()) {
-            Map.Entry<String, Long> entry = filesIter.next();
+        Iterator<Map.Entry<String, Long>> it = fileIdMap.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Long> entry = it.next();
             Path filePath = Paths.get(entry.getKey());
             Long id = entry.getValue();
             if(!PathUtils.pathsAreEqual(path, filePath) && PathUtils.firstPathIsParent(path, filePath)) {
                 idFileMap.remove(id);
-                filesIter.remove();
+                it.remove();
             }
         }
     }

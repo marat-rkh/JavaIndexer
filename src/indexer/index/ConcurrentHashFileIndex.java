@@ -1,5 +1,6 @@
 package indexer.index;
 
+import indexer.exceptions.InconsistentIndexException;
 import indexer.tokenizer.Token;
 import indexer.tokenizer.Tokenizer;
 
@@ -30,17 +31,18 @@ public class ConcurrentHashFileIndex implements FileIndex {
     }
 
     @Override
-    public void addFile(String filePath) throws IOException {
+    public boolean addFile(String filePath) {
         readWriteLock.writeLock().lock();
         try {
             index.addFile(filePath);
         } finally {
             readWriteLock.writeLock().unlock();
         }
+        return false;
     }
 
     @Override
-    public void removeFileIteratingAll(String filePath) throws IOException {
+    public void removeFileIteratingAll(String filePath) {
         readWriteLock.writeLock().lock();
         try {
             index.removeFileIteratingAll(filePath);
@@ -50,23 +52,25 @@ public class ConcurrentHashFileIndex implements FileIndex {
     }
 
     @Override
-    public void removeFileReadingDisk(String filePath) throws IOException {
+    public boolean removeFileReadingDisk(String filePath) {
         readWriteLock.writeLock().lock();
         try {
             index.removeFileReadingDisk(filePath);
         } finally {
             readWriteLock.writeLock().unlock();
         }
+        return false;
     }
 
     @Override
-    public void handleFileModification(String filePath) throws IOException {
+    public boolean handleFileModification(String filePath) throws InconsistentIndexException {
         readWriteLock.writeLock().lock();
         try {
             index.handleFileModification(filePath);
         } finally {
             readWriteLock.writeLock().unlock();
         }
+        return false;
     }
 
     @Override
@@ -80,7 +84,7 @@ public class ConcurrentHashFileIndex implements FileIndex {
     }
 
     @Override
-    public void removeDirectory(String dirPath) throws IOException {
+    public void removeDirectory(String dirPath) {
         readWriteLock.writeLock().lock();
         try {
             index.removeDirectory(dirPath);
