@@ -16,18 +16,20 @@ import static java.nio.file.StandardWatchEventKinds.*;
  * Created by mrx on 27.09.14.
  */
 public class SingleDirMonitor implements FSMonitor {
+    private final Path directory;
     private final WatchService watchService;
     private final Map<WatchKey, Path> keyPathMap = new HashMap<WatchKey, Path>();
     private final IndexEventsHandler indexEventsHandler;
 
     /**
      *
-     * @param indexEventsHandler
      * @param directory
+     * @param indexEventsHandler
      * @throws NotDirectoryException, IOException
      */
-    public SingleDirMonitor(IndexEventsHandler indexEventsHandler, Path directory)
+    public SingleDirMonitor(Path directory, IndexEventsHandler indexEventsHandler)
             throws IOException {
+        this.directory = directory;
         this.watchService = FileSystems.getDefault().newWatchService();
         this.indexEventsHandler = indexEventsHandler;
         if(directory == null) {
@@ -37,6 +39,11 @@ public class SingleDirMonitor implements FSMonitor {
             throw new NotDirectoryException(directory.toFile().getAbsolutePath());
         }
         registerDirectory(directory);
+    }
+
+    @Override
+    public Path getDirectory() {
+        return directory;
     }
 
     @Override
