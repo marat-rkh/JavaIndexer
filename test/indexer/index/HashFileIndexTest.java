@@ -6,6 +6,7 @@ import indexer.tokenizer.Word;
 import indexer.tokenizer.WordsTokenizer;
 import org.junit.Test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -121,5 +122,22 @@ public class HashFileIndexTest extends TmpFsCreator {
         assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 0);
         assertTrue(hashFileIndex.search(new Word("ipsum")).size() == 0);
         assertTrue(hashFileIndex.search(new Word("replacement")).size() == 1);
+    }
+
+    @Test
+    public void testRemoveDirectory() throws Exception {
+        FileIndex hashFileIndex = new HashFileIndex(tokenizer);
+        hashFileIndex.addFile(file1.getAbsolutePath());
+        hashFileIndex.addFile(file2.getAbsolutePath());
+        hashFileIndex.addFile(file3.getAbsolutePath());
+        hashFileIndex.addFile(dir1SubFile1.getAbsolutePath());
+        hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
+        hashFileIndex.removeDirectory(dir1.getAbsolutePath());
+
+        assertTrue(hashFileIndex.containsFile(file1.getAbsolutePath()));
+        assertTrue(hashFileIndex.containsFile(file2.getAbsolutePath()));
+        assertTrue(hashFileIndex.containsFile(file3.getAbsolutePath()));
+        assertFalse(hashFileIndex.containsFile(dir1SubFile1.getAbsolutePath()));
+        assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
     }
 }

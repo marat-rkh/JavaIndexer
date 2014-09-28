@@ -105,6 +105,7 @@ public class HashFileIndex implements FileIndex {
                 it.remove();
             }
         }
+        removeFromFileIdMaps(path);
     }
 
     private List<Token> readTokens(String filePath) throws IOException {
@@ -161,6 +162,19 @@ public class HashFileIndex implements FileIndex {
             Path filePath = Paths.get(idFileMap.get(it.next()));
             if(!PathUtils.pathsAreEqual(parentPath, filePath) && PathUtils.firstPathIsParent(parentPath, filePath)) {
                 it.remove();
+            }
+        }
+    }
+
+    private void removeFromFileIdMaps(Path path) {
+        Iterator<Map.Entry<String, Long>> filesIter = fileIdMap.entrySet().iterator();
+        while (filesIter.hasNext()) {
+            Map.Entry<String, Long> entry = filesIter.next();
+            Path filePath = Paths.get(entry.getKey());
+            Long id = entry.getValue();
+            if(!PathUtils.pathsAreEqual(path, filePath) && PathUtils.firstPathIsParent(path, filePath)) {
+                idFileMap.remove(id);
+                filesIter.remove();
             }
         }
     }
