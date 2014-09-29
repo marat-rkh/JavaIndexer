@@ -14,6 +14,7 @@ public class SingleDirMonitorTest extends TmpFsCreator {
         TestEventsHandler handler = new TestEventsHandler();
         FSMonitor monitor = new SingleDirMonitor(dir1.toPath(), handler);
         startMonitorThread(monitor);
+        Thread.sleep(5000);
         File addedFile = File.createTempFile("addedFile", "", dir1);
         Thread.sleep(5000);
 
@@ -29,6 +30,7 @@ public class SingleDirMonitorTest extends TmpFsCreator {
         TestEventsHandler handler = new TestEventsHandler();
         FSMonitor monitor = new SingleDirMonitor(tempFolder.getRoot().toPath(), handler);
         startMonitorThread(monitor);
+        Thread.sleep(5000);
         File addedDir = tempFolder.newFolder("addedDir");
         Thread.sleep(5000);
 
@@ -44,6 +46,7 @@ public class SingleDirMonitorTest extends TmpFsCreator {
         TestEventsHandler handler = new TestEventsHandler();
         FSMonitor monitor = new SingleDirMonitor(tempFolder.getRoot().toPath(), handler);
         startMonitorThread(monitor);
+        Thread.sleep(5000);
         if(!file1.delete() || !file2.delete()) {
             fail("manual file deleting failed");
         }
@@ -60,6 +63,7 @@ public class SingleDirMonitorTest extends TmpFsCreator {
         TestEventsHandler handler = new TestEventsHandler();
         FSMonitor monitor = new SingleDirMonitor(tempFolder.getRoot().toPath(), handler);
         startMonitorThread(monitor);
+        Thread.sleep(5000);
         appendTextToFile(file1, "some text");
         Thread.sleep(5000);
 

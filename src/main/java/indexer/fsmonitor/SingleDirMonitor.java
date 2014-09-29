@@ -61,16 +61,16 @@ public class SingleDirMonitor implements FSMonitor {
             try {
                 key = watchService.take();
             } catch (Exception e) {
-                System.out.println("Exiting... msg: " + e.getMessage());
-                e.printStackTrace();
+//                System.out.println("Exiting... msg: " + e.getMessage());
+//                e.printStackTrace();
                 return;
             }
-            System.out.println("Got event");
+//            System.out.println("Got event");
             Path registeredDir = keyPathMap.get(key);
             if (registeredDir == null) {
                 continue;
             }
-            System.out.println("Start handling");
+//            System.out.println("Start handling");
             handleEvents(key, registeredDir);
             if (!key.reset()) {
                 keyPathMap.remove(key);
