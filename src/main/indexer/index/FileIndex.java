@@ -3,7 +3,6 @@ package indexer.index;
 import indexer.exceptions.InconsistentIndexException;
 import indexer.tokenizer.Token;
 
-import java.io.IOException;
 import java.util.List;
 
 /**

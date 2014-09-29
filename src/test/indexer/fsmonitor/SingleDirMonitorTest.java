@@ -2,14 +2,9 @@ package indexer.fsmonitor;
 
 import indexer.TmpFsCreator;
 import indexer.exceptions.NotHandledEventException;
-import indexer.handler.IndexEventsHandler;
 import org.junit.Test;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 

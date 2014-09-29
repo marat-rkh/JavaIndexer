@@ -4,7 +4,6 @@ import indexer.exceptions.InconsistentIndexException;
 import indexer.tokenizer.Token;
 import indexer.tokenizer.Tokenizer;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
