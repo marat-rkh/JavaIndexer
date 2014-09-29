@@ -9,13 +9,13 @@ JavaIndexer
 
 Commands:  
 
-a file_or_dir_path - add file or dir to index
+a [file_or_dir_path] - add file or dir to index
 
-r file_or_dir_path - remove file or dir from index
+r [file_or_dir_path] - remove file or dir from index
 
 s [word]             - get list of files containing <word>
 
-c <file_path>        - check if index contains file
+c [file_path]        - check if index contains file
 
 h                    - show this help
 
