@@ -6,7 +6,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Created by mrx on 26.09.14.
+ * Represents monitor that listens some directory for files adding, removing and modification events.
+ * For listening WatchService class is used.
+ *
+ * @see java.nio.file.WatchService
  */
 public interface FSMonitor {
     public Path getDirectory();

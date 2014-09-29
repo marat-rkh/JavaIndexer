@@ -12,7 +12,9 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 /**
- * Created by mrx on 27.09.14.
+ * IndexEventsHandler interface implementation
+ *
+ * @see indexer.handler.IndexEventsHandler
  */
 public class IndexUpdater implements IndexEventsHandler {
     private final FileIndex fileIndex;

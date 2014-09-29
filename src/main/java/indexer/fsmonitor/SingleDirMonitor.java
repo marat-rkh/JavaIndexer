@@ -14,7 +14,12 @@ import java.nio.file.LinkOption;
 import static java.nio.file.StandardWatchEventKinds.*;
 
 /**
- * Created by mrx on 27.09.14.
+ * FSMonitor interface implementation for listening single directory and affecting index.
+ * Class takes IndexEventsHandler as constructor argument and calls appropriate methods on
+ * remove, add and modify events. Moreover, some output stream can be passed to trace events.
+ *
+ * @see indexer.fsmonitor.FSMonitor
+ * @see indexer.handler.IndexEventsHandler
  */
 public class SingleDirMonitor implements FSMonitor {
     private final Path directory;
@@ -24,9 +29,11 @@ public class SingleDirMonitor implements FSMonitor {
     private OutputStream traceStream = null;
 
     /**
+     * Constructor with parameters. Note that it expects directory as the first argument and throws
+     * NotDirectoryException if it is not (file or null)
      *
-     * @param directory
-     * @param indexEventsHandler
+     * @param directory directory which events should be listened and handled
+     * @param indexEventsHandler events handler
      * @throws NotDirectoryException, IOException
      */
     public SingleDirMonitor(Path directory, IndexEventsHandler indexEventsHandler)
@@ -54,6 +61,14 @@ public class SingleDirMonitor implements FSMonitor {
         return directory;
     }
 
+    /**
+     * Starts directory monitoring loop. While events happen, they are handled by handler
+     * passed in constructor. Monitoring process ends when all registered subdirectories'
+     * keys become invalid or implicit interruption is performed (by calling stopMonitoring method)
+     *
+     * @throws NotHandledEventException if some events handling has been failed due to handler errors
+     * or due to events overflow (too match of them is sent and WatchService just can not listen to all of them)
+     */
     @Override
     public void startMonitoring() throws NotHandledEventException {
         while (true) {
@@ -77,6 +92,11 @@ public class SingleDirMonitor implements FSMonitor {
         }
     }
 
+    /**
+     * Stops monitoring process
+     *
+     * @throws IOException
+     */
     @Override
     public void stopMonitoring() throws IOException {
         watchService.close();

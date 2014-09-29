@@ -5,7 +5,11 @@ import indexer.exceptions.NotHandledEventException;
 import java.nio.file.Path;
 
 /**
- * Created by mrx on 26.09.14.
+ * Interface representing index modification events handler. If adding, removing or
+ * modifying files or folders events happen somewhere (for example, in filesystem),
+ * appropriate methods of this handler can be called to affect index
+ *
+ * @see indexer.index.FileIndex
  */
 public interface IndexEventsHandler {
     public void onFilesAddedEvent(Path filePath) throws NotHandledEventException;

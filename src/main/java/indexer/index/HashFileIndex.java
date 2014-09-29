@@ -14,7 +14,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Created by mrx on 27.09.14.
+ * FileIndex interface implementation based on HashMap.
+ *
+ * @see indexer.index.FileIndex
  */
 public class HashFileIndex implements FileIndex {
     private final Map<Token, HashSet<Long>> tokenFilesMap = new HashMap<Token, HashSet<Long>>();
@@ -29,6 +31,12 @@ public class HashFileIndex implements FileIndex {
         this.tokenizer = tokenizer;
     }
 
+    /**
+     * Searches all files in index containing {@code tokenToFind}
+     *
+     * @param tokenToFind token to search
+     * @return            files containing passed token or empty list (if no such files in index)
+     */
     @Override
     public List<String> search(Token tokenToFind) {
         if(tokenToFind != null) {
@@ -45,11 +53,12 @@ public class HashFileIndex implements FileIndex {
     }
 
     /**
-     * Adds file's content to index. Content is retrieved using tokenizer provided in constructor. If specified file
+     * Adds file to index. File's content is retrieved using tokenizer provided in constructor. If specified file
      * is already in index, it will not be updated.
      *
-     * @param filePath
-     * @throws IOException
+     * @param filePath path of file to be added
+     * @return         {@code true} if file has been added or already presents in index.
+     *                 {@code false} is returned if IO errors occurred while reading file from disk
      */
     @Override
     public boolean addFile(String filePath) {
@@ -65,6 +74,12 @@ public class HashFileIndex implements FileIndex {
         return true;
     }
 
+    /**
+     * Removes file iterating while index. Common use case - file has been removed from disk and
+     * removing from index is needed too.
+     *
+     * @param filePath path of file to be removed
+     */
     @Override
     public void removeFileIteratingAll(String filePath) {
         if(containsFile(filePath)) {
@@ -75,6 +90,13 @@ public class HashFileIndex implements FileIndex {
         }
     }
 
+    /**
+     * Removes file reading it's content from disk.
+     *
+     * @param filePath path of file to be removed
+     * @return         {@code true} if file has been removed or no such file in index.
+     *                 {@code false} is returned if IO errors occurred while reading file from disk
+     */
     @Override
     public boolean removeFileReadingDisk(String filePath) {
         if(containsFile(filePath)) {
@@ -88,6 +110,14 @@ public class HashFileIndex implements FileIndex {
         return true;
     }
 
+    /**
+     * Updates file in index by removing it from index and adding again.
+     *
+     * @param filePath path of file to be updated
+     * @return         {@code true} if file has been removed or no such file in index.
+     *                 {@code false} is returned if file can not be read from disk
+     * @throws InconsistentIndexException if file has been removed and than IO errors occurred while adding it again
+     */
     @Override
     public boolean handleFileModification(String filePath) throws InconsistentIndexException {
         if(new File(filePath).canRead()) {
@@ -102,11 +132,22 @@ public class HashFileIndex implements FileIndex {
         return false;
     }
 
+    /**
+     * Checks if specified file is in index
+     *
+     * @param filePath file to check
+     * @return         {@code true} if file is in index, {@code false} otherwise
+     */
     @Override
     public boolean containsFile(String filePath) {
         return fileIdMap.containsKey(filePath);
     }
 
+    /**
+     * Removes specified directory from index
+     *
+     * @param dirPath directory to remove
+     */
     @Override
     public void removeDirectory(String dirPath) {
         Path path = Paths.get(dirPath);

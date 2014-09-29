@@ -6,7 +6,8 @@ import indexer.tokenizer.Token;
 import java.util.List;
 
 /**
- * Created by mrx on 26.09.14.
+ * Interface for files index that support adding, removing, updating file if it was modified
+ * and searching files containing specified token.
  */
 public interface FileIndex {
     public List<String> search(Token tokenToFind);

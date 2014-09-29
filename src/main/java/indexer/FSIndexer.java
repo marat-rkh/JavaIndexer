@@ -23,7 +23,15 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Created by mrx on 27.09.14.
+ * Filesystem indexer based on ConcurrentHashFileIndex. Supports adding and removing files and
+ * directories in index, searching files containing some token. Moreover, if some events in
+ * filesystem happen (files or directories are added, removed or modified), index will be updated
+ * appropriately using FSMonitorsManager.
+ * FSIndexer is thread safe - supports multiple readers (search and contains queries) and
+ * one writer (add and remove queries) at a time.
+ *
+ * @see indexer.index.ConcurrentHashFileIndex
+ * @see indexer.fsmonitor.FSMonitorsManager
  */
 public class FSIndexer implements AutoCloseable {
     private final FileIndex fileIndex;
@@ -44,6 +52,14 @@ public class FSIndexer implements AutoCloseable {
         monitorsManager = new FSMonitorsManager(indexUpdater, indexMonitorHandler, traceStream);
     }
 
+    /**
+     * Searches all files in index containing {@code tokenToFind}
+     *
+     * @param tokenToFind token to search
+     * @return            files containing passed token or empty list (if no such files in index)
+     * @throws IndexClosedException if method is called after FSIndexer has been closed
+     * @throws InconsistentIndexException if method is called after filesystem updating errors have been occurred
+     */
     public List<String> search(Token tokenToFind) throws IndexClosedException, InconsistentIndexException {
         readWriteLock.readLock().lock();
         try {
@@ -54,6 +70,14 @@ public class FSIndexer implements AutoCloseable {
         }
     }
 
+    /**
+     * Adds file or directory to index
+     *
+     * @param filePath
+     * @throws IndexClosedException if method is called after FSIndexer has been closed
+     * @throws InconsistentIndexException if method is called after filesystem updating errors have been occurred
+     * @throws IOException if IO errors occurred while adding
+     */
     public void add(String filePath) throws IndexClosedException, InconsistentIndexException, IOException {
         readWriteLock.writeLock().lock();
         try {
@@ -73,6 +97,14 @@ public class FSIndexer implements AutoCloseable {
         }
     }
 
+    /**
+     * Removes file or directory form index
+     *
+     * @param filePath
+     * @throws IndexClosedException if method is called after FSIndexer has been closed
+     * @throws InconsistentIndexException if method is called after filesystem updating errors have been occurred
+     * @throws IOException if IO errors occurred while removing
+     */
     public void remove(String filePath) throws IndexClosedException, InconsistentIndexException, IOException {
         readWriteLock.writeLock().lock();
         try {
@@ -92,6 +124,14 @@ public class FSIndexer implements AutoCloseable {
         }
     }
 
+    /**
+     * Checks if specified file is in index
+     *
+     * @param filePath file to check
+     * @return         {@code true} if file is in index, {@code false} otherwise
+     * @throws IndexClosedException if method is called after FSIndexer has been closed
+     * @throws InconsistentIndexException if method is called after filesystem updating errors have been occurred
+     */
     public boolean containsFile(String filePath) throws IndexClosedException, InconsistentIndexException {
         readWriteLock.readLock().lock();
         try {

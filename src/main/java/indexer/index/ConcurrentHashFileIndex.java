@@ -9,7 +9,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Created by mrx on 27.09.14.
+ * Concurrent version of HashFileIndex. Supports multiple readers (search and contains queries) and
+ * one writer (add, remove and modify queries) at a time
+ *
+ * @see indexer.index.HashFileIndex
  */
 public class ConcurrentHashFileIndex implements FileIndex {
     private final HashFileIndex index;
