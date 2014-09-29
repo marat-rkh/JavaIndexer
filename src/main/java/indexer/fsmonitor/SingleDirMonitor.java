@@ -61,7 +61,8 @@ public class SingleDirMonitor implements FSMonitor {
             try {
                 key = watchService.take();
             } catch (Exception e) {
-                System.out.println("Exiting...");
+                System.out.println("Exiting... msg: " + e.getMessage());
+                e.printStackTrace();
                 return;
             }
             System.out.println("Got event");
