@@ -15,7 +15,7 @@ public class SingleDirMonitorTest extends TmpFsCreator {
         FSMonitor monitor = new SingleDirMonitor(dir1.toPath(), handler);
         startMonitorThread(monitor);
         File addedFile = File.createTempFile("addedFile", "", dir1);
-        Thread.sleep(1000);
+        Thread.sleep(10000);
 
         assertEquals(1, handler.addedPaths.size());
         assertEquals(0, handler.removedPaths.size());
