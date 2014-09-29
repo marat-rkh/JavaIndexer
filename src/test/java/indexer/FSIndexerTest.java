@@ -87,6 +87,22 @@ public class FSIndexerTest extends TmpFsCreator {
     }
 
     @Test
+    public void testFastQueries() throws Exception {
+        final FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), null);
+        fsIndexer.add(dir2.getAbsolutePath());
+        final AtomicInteger searchCounter = new AtomicInteger(0);
+        final int repeats = 10000;
+        Runnable fastSearchQuery = fastSearchRunnable(fsIndexer, searchCounter, new Word("amet,"), repeats);
+        final AtomicInteger addCounter = new AtomicInteger(0);
+        Runnable addRemoveQuery = delayedAddRemoveRunnable(fsIndexer, addCounter, dir1.getAbsolutePath(), dir1.getAbsolutePath());
+        runTestThreads(Arrays.asList(fastSearchQuery, addRemoveQuery));
+        assertEquals(10000, searchCounter.get());
+        assertEquals(2, addCounter.get());
+        assertFalse(fsIndexer.containsFile(dir1SubFile1.getAbsolutePath()));
+        fsIndexer.close();
+    }
+
+    @Test
     public void testAllQueries() throws Exception {
         final FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), null);
         fsIndexer.add(dir2.getAbsolutePath());
@@ -118,7 +134,6 @@ public class FSIndexerTest extends TmpFsCreator {
         assertFalse(fsIndexer.containsFile(file3.getAbsolutePath()));
         assertFalse(fsIndexer.containsFile(dir1SubFile1.getAbsolutePath()));
         assertFalse(fsIndexer.containsFile(dir2SubFile1.getAbsolutePath()));
-
     }
 
     private Runnable createSearchRunnable(final FSIndexer fsIndexer, final AtomicInteger counterToModify,
@@ -186,6 +201,51 @@ public class FSIndexerTest extends TmpFsCreator {
             public void run() {
                 try {
                     fsIndexer.remove(file);
+                    counterToModify.incrementAndGet();
+                } catch (Exception e) {
+                    int old = counterToModify.get();
+                    while (!counterToModify.compareAndSet(old, -1000)) {
+                        old = counterToModify.get();
+                    }
+                }
+            }
+        };
+    }
+
+    private Runnable fastSearchRunnable(final FSIndexer fsIndexer, final AtomicInteger counterToModify,
+                                        final Token token, final int times) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for(int i = 0; i < times; i++) {
+                        int results = fsIndexer.search(token).size();
+                        int old = counterToModify.get();
+                        while (!counterToModify.compareAndSet(old, old + results)) {
+                            old = counterToModify.get();
+                        }
+                    }
+                } catch (Exception e) {
+                    int old = counterToModify.get();
+                    while (!counterToModify.compareAndSet(old, -1000)) {
+                        old = counterToModify.get();
+                    }
+                }
+            }
+        };
+    }
+
+    private Runnable delayedAddRemoveRunnable(final FSIndexer fsIndexer, final AtomicInteger counterToModify,
+                                              final String fileToAdd, final String fileToRemove) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(50);
+                    fsIndexer.add(fileToAdd);
+                    counterToModify.incrementAndGet();
+                    Thread.sleep(50);
+                    fsIndexer.remove(fileToRemove);
                     counterToModify.incrementAndGet();
                 } catch (Exception e) {
                     int old = counterToModify.get();
