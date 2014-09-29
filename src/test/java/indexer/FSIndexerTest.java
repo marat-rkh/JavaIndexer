@@ -10,9 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class FSIndexerTest extends TmpFsCreator {
     @Test
@@ -65,6 +63,26 @@ public class FSIndexerTest extends TmpFsCreator {
         Runnable rm3 = createRemoveRunnable(fsIndexer, removeCounter, file2.getAbsolutePath());
         runTestThreads(Arrays.asList(rm1, rm2, rm3));
         assertEquals(3, removeCounter.get());
+        fsIndexer.close();
+    }
+
+    @Test
+    public void testReadWrite() throws Exception {
+        final FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), null);
+        fsIndexer.add(dir1.getAbsolutePath());
+        fsIndexer.add(dir2.getAbsolutePath());
+        final AtomicInteger searchCounter = new AtomicInteger(0);
+        Runnable searchQuery1 = createSearchRunnable(fsIndexer, searchCounter, new Word("Lorem"));
+        Runnable searchQuery2 = createSearchRunnable(fsIndexer, searchCounter, new Word("Lorem"));
+        Runnable searchQuery3 = createSearchRunnable(fsIndexer, searchCounter, new Word("ipsum"));
+        final AtomicInteger addCounter = new AtomicInteger(0);
+        Runnable addQuery1 = createAddRunnable(fsIndexer, addCounter, file1.getAbsolutePath());
+        Runnable addQuery2 = createAddRunnable(fsIndexer, addCounter, tempFolder.getRoot().getAbsolutePath());
+        Runnable addQuery3 = createAddRunnable(fsIndexer, addCounter, tempFolder.getRoot().getAbsolutePath());
+        runTestThreads(Arrays.asList(searchQuery1, addQuery1, searchQuery2, addQuery2, addQuery3, searchQuery3));
+        assertEquals(3, searchCounter.get());
+        assertEquals(3, addCounter.get());
+        assertEquals(3, fsIndexer.search(new Word("content")).size());
         fsIndexer.close();
     }
 
