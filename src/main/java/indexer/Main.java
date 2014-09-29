@@ -5,9 +5,7 @@ import indexer.exceptions.IndexClosedException;
 import indexer.tokenizer.Word;
 import indexer.tokenizer.WordsTokenizer;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -17,7 +15,7 @@ public class Main {
     public static void main(String[] args) {
         showHelp();
         try (FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), System.out);
-             BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+             BufferedReader br = new BufferedReader(new InputStreamReader(getStream(args)))) {
             while (true) {
                 System.out.println("Enter command:");
                 String input = br.readLine();
@@ -39,6 +37,13 @@ public class Main {
         } catch (InconsistentIndexException e) {
             System.out.println("Inconsistent index error, details: " + e.getMessage());
         }
+    }
+
+    private static InputStream getStream(String[] args) throws FileNotFoundException {
+        if(args.length == 0) {
+            return System.in;
+        }
+        return new FileInputStream(args[0]);
     }
 
     private static void showHelp() {
@@ -74,18 +79,21 @@ public class Main {
 
     private static void addCommand(FSIndexer fsIndexer, String file)
             throws IndexClosedException, IOException, InconsistentIndexException {
+        System.out.println("Adding: " + file);
         fsIndexer.add(file);
         System.out.println("Added: " + file);
     }
 
     private static void removeCommand(FSIndexer fsIndexer, String file)
             throws IndexClosedException, IOException, InconsistentIndexException {
+        System.out.println("Removing: " + file);
         fsIndexer.remove(file);
         System.out.println("Removed: " + file);
     }
 
     private static void searchCommand(FSIndexer fsIndexer, String what)
             throws IndexClosedException, InconsistentIndexException {
+        System.out.println("Searching: " + what);
         List<String> files = fsIndexer.search(new Word(what));
         if(files != null && files.size() != 0) {
             for (String f : files) {
@@ -98,6 +106,7 @@ public class Main {
 
     private static void containsCommand(FSIndexer fsIndexer, String file)
             throws IndexClosedException, InconsistentIndexException {
+        System.out.println("Check contains: " + file);
         System.out.println(fsIndexer.containsFile(file));
     }
 
