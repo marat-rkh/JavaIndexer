@@ -10,24 +10,41 @@ JavaIndexer
 Commands:  
 
 a <file_or_dir_path> - add file or dir to index
+
 r <file_or_dir_path> - remove file or dir from index
+
 s <word>             - get list of files containing <word>
+
 c <file_path>        - check if index contains file
+
 h                    - show this help
+
 q                    - finish work
+
 Кроме того, для автоматизации тестирования примера, вы можете использовать 'mvn exec:java -Dexec.args="/path/to/commands/file"', где в качестве аргумента указать путь к файлу с перечисленными в нём командами в формате, представленном выше. Пример файла:
 
 a /home/mrx/Test
+
 a /home/mrx/Test2
+
 s my
+
 s die
+
 s себя
+
 c /home/mrx/Test/darkValleys.txt
+
 r /home/mrx/Test2
+
 c /home/mrx/Test/darkValleys.txt
+
 s my
+
 s die
+
 s себя
+
 q
 
 Все команды из файла будут выполнены по очереди.
