@@ -31,7 +31,7 @@ public class Main {
                 }
             }
         } catch (IOException e) {
-            System.out.println("IO error occurred. Details: " + e.getMessage());
+            System.out.println("IO error: " + e.getMessage());
         } catch (IndexClosedException e) {
             System.out.println("Strange situation - index has been closed");
         } catch (InconsistentIndexException e) {
@@ -58,7 +58,7 @@ public class Main {
     }
 
     private static void handleCommandWithArg(FSIndexer fsIndexer, String[] command)
-            throws IndexClosedException, IOException, InconsistentIndexException {
+            throws IndexClosedException, InconsistentIndexException {
         switch (command[0]) {
             case "a":
                 addCommand(fsIndexer, command[1]);
@@ -78,17 +78,27 @@ public class Main {
     }
 
     private static void addCommand(FSIndexer fsIndexer, String file)
-            throws IndexClosedException, IOException, InconsistentIndexException {
+            throws IndexClosedException, InconsistentIndexException {
         System.out.println("Adding: " + file);
-        fsIndexer.add(file);
-        System.out.println("Added: " + file);
+        try {
+            fsIndexer.add(file);
+            System.out.println("Added: " + file);
+        } catch (IOException e) {
+            System.out.println("File not added: " + file);
+            System.out.println("Reason: " + e.getMessage());
+        }
     }
 
     private static void removeCommand(FSIndexer fsIndexer, String file)
-            throws IndexClosedException, IOException, InconsistentIndexException {
+            throws IndexClosedException, InconsistentIndexException {
         System.out.println("Removing: " + file);
-        fsIndexer.remove(file);
-        System.out.println("Removed: " + file);
+        try {
+            fsIndexer.remove(file);
+            System.out.println("Removed: " + file);
+        } catch (IOException e) {
+            System.out.println("File not removed: " + file);
+            System.out.println("Reason: " + e.getMessage());
+        }
     }
 
     private static void searchCommand(FSIndexer fsIndexer, String what)
