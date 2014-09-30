@@ -27,7 +27,7 @@ public class WordsTokenizer implements Tokenizer {
             wordString += (char)data;
             data = reader.read();
         }
-        if(data == -1 && wordString == "") {
+        if(data == -1 && wordString.equals("")) {
             return null;
         }
         return new Word(wordString);
