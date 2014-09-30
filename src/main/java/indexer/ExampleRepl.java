@@ -116,8 +116,8 @@ public class ExampleRepl {
     private void printCollectedResults() {
         System.out.println("Previous commands results:");
         if(resultsQueue.size() != 0) {
-            for (String r : resultsQueue) {
-                System.out.println(r);
+            while (!resultsQueue.isEmpty()) {
+                System.out.println(resultsQueue.poll());
             }
         } else {
             System.out.println("no results");
@@ -190,7 +190,7 @@ public class ExampleRepl {
                 throws IndexClosedException, InconsistentIndexException {
             List<String> files = fsIndexer.search(new Word(arg));
             if(files != null && files.size() != 0) {
-                String searchRes = "";
+                String searchRes = "#" + cmdNumber + "-Files with token '" + arg + "':\n";
                 for (String f : files) {
                     searchRes += (f + "\n");
                 }
