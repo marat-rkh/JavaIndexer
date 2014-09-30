@@ -79,7 +79,7 @@ public class FSIndexer implements AutoCloseable {
      * @throws IOException if IO errors occurred while adding
      */
     public void add(String filePath) throws IndexClosedException, InconsistentIndexException, IOException {
-        readWriteLock.writeLock().lock();
+        readWriteLock.readLock().lock();
         try {
             checkState();
             Path path = Paths.get(filePath);
@@ -93,7 +93,7 @@ public class FSIndexer implements AutoCloseable {
             }
             monitorsManager.addMonitor(path, MONITOR_RESTARTS_NUMBER);
         } finally {
-            readWriteLock.writeLock().unlock();
+            readWriteLock.readLock().unlock();
         }
     }
 

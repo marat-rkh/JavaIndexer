@@ -13,7 +13,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Filesystem walker. Collects files list starting from specified root folder using multiple threads.
- * On walk started, collected files blocking queue may be obtained to listen the process of files adding.
+ * On startWalking called, collected files are put in BlockingQueue passed to the class instance constructor.
+ * Note when filesystem traversal is finished FSWalker will put special fake file in output BlockingQueue to
+ * indicate traversal end event. This fake file can be obtained by calling FSWalker.FAKE_END_FILE. So class
+ * users can use FSWalker.FAKE_END_FILE to check if current collected file equals to it (and if so understand
+ * that all files have been already collected)
  */
 public class FSWalker {
     private final int WALKERS_NUM = Runtime.getRuntime().availableProcessors();
@@ -22,18 +26,24 @@ public class FSWalker {
             Executors.newFixedThreadPool(WALKERS_NUM);
     private final Thread walkersManagerThread = new Thread(new WalkersManager());
     private final BlockingQueue<File> dirsQueue = new LinkedBlockingQueue<>();
-    private final BlockingQueue<File> filesQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<File> filesQueue;
+    public static final File FAKE_END_FILE = new File("");
 
     private final AtomicBoolean someWalkerDoneHisWork = new AtomicBoolean(false);
 
+    public FSWalker(BlockingQueue<File> filesQueue) {
+        this.filesQueue = filesQueue;
+    }
+
     /**
-     * Walks specified folder collecting files. Note that folderPath must not be null
+     * Starts walking specified folder collecting files. Note that folderPath must not be null
      *
-     * @param folderPath path of directory to walk
+     * @param folderPath path of directory to start walking
      */
-    public void walk(Path folderPath) {
+    public void startWalking(Path folderPath) {
         if(!Files.isDirectory(folderPath)) {
             filesQueue.add(folderPath.toFile());
+            filesQueue.add(FAKE_END_FILE);
         } else {
             dirsQueue.add(folderPath.toFile());
             walkersManagerThread.start();
@@ -47,15 +57,6 @@ public class FSWalker {
 
     public boolean isFinished() {
         return !walkersManagerThread.isAlive();
-    }
-
-    /**
-     * Returns BlockingQueue containing files collected at the moment
-     *
-     * @return BlockingQueue containing files collected at the moment
-     */
-    public BlockingQueue<File> getCollectedFiles() {
-        return filesQueue;
     }
 
     private class WalkersManager implements Runnable {
@@ -78,6 +79,8 @@ public class FSWalker {
                     }
                 }
             } catch (InterruptedException e) {
+            } finally {
+                filesQueue.add(FAKE_END_FILE);
             }
         }
     }
@@ -88,7 +91,7 @@ public class FSWalker {
         /**
          * Path to directory must not be null
          *
-         * @param dirPath path of directory to walk
+         * @param dirPath path of directory to startWalking
          */
         public DirectoryWalker(Path dirPath) {
             this.dirPath = dirPath;
@@ -102,7 +105,7 @@ public class FSWalker {
                     if (entry.isDirectory()) {
                         dirsQueue.put(entry);
                     } else {
-                        filesQueue.offer(entry);
+                        filesQueue.put(entry);
                     }
                 }
             } catch (InterruptedException e) {
