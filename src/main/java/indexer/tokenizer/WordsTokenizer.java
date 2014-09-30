@@ -23,7 +23,7 @@ public class WordsTokenizer implements Tokenizer {
     private Token readWord(Reader reader) throws IOException {
         String wordString = "";
         int data = reader.read();
-        while(((char)data) != ' ' && data != -1) {
+        while(((char)data) != ' ' && ((char)data) != '\n' && data != -1) {
             wordString += (char)data;
             data = reader.read();
         }
