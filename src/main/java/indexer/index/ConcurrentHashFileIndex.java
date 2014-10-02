@@ -44,6 +44,16 @@ public class ConcurrentHashFileIndex implements FileIndex {
     }
 
     @Override
+    public void addFiles(List<String> filesPaths) {
+        readWriteLock.writeLock().lock();
+        try {
+            index.addFiles(filesPaths);
+        } finally {
+            readWriteLock.writeLock().unlock();
+        }
+    }
+
+    @Override
     public void removeFileIteratingAll(String filePath) {
         readWriteLock.writeLock().lock();
         try {

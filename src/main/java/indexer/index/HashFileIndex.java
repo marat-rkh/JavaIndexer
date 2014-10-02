@@ -74,6 +74,13 @@ public class HashFileIndex implements FileIndex {
         return true;
     }
 
+    @Override
+    public void addFiles(List<String> filesPaths) {
+        for(String filePath : filesPaths) {
+            addFile(filePath);
+        }
+    }
+
     /**
      * Removes file iterating while index. Common use case - file has been removed from disk and
      * removing from index is needed too.

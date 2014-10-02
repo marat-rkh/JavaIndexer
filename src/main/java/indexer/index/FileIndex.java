@@ -13,6 +13,7 @@ public interface FileIndex {
     public List<String> search(Token tokenToFind);
 
     public boolean addFile(String filePath);
+    public void addFiles(List<String> filesPaths);
     public boolean removeFileReadingDisk(String filePath);
     public void removeFileIteratingAll(String filePath);
     public boolean handleFileModification(String filePath) throws InconsistentIndexException;

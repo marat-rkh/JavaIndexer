@@ -9,6 +9,9 @@ import java.util.List;
  * Created by mrx on 26.09.14.
  */
 public class WordsTokenizer implements Tokenizer {
+    private String wordString = "";
+    private int data;
+
     @Override
     public List<Token> tokenize(Reader reader) throws IOException {
         List<Token> tokens = new ArrayList<Token>();
@@ -21,8 +24,8 @@ public class WordsTokenizer implements Tokenizer {
     }
 
     private Token readWord(Reader reader) throws IOException {
-        String wordString = "";
-        int data = reader.read();
+        wordString = "";
+        data = reader.read();
         while(((char)data) != ' ' && ((char)data) != '\n' && data != -1) {
             wordString += (char)data;
             data = reader.read();

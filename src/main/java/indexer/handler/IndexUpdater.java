@@ -3,15 +3,17 @@ package indexer.handler;
 import indexer.exceptions.InconsistentIndexException;
 import indexer.exceptions.NotHandledEventException;
 import indexer.index.FileIndex;
-import indexer.utils.FSWalker;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * IndexEventsHandler interface implementation
@@ -20,7 +22,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class IndexUpdater implements IndexEventsHandler {
     private final FileIndex fileIndex;
-    private final int ADD_FILE_CACHE_SIZE = 50;
+    private final int ADD_FILE_CACHE_SIZE = 10000;
+    private final String TEXT_MIME_PREFIX = "text/";
 
     public IndexUpdater(FileIndex fileIndex) {
         this.fileIndex = fileIndex;
@@ -28,27 +31,28 @@ public class IndexUpdater implements IndexEventsHandler {
 
     @Override
     public void onFilesAddedEvent(Path filePath) throws NotHandledEventException {
-        BlockingQueue<File> collectedFiles = new LinkedBlockingQueue<>();
-        FSWalker fsWalker = new FSWalker(collectedFiles);
-        fsWalker.startWalking(filePath);
+        final List<String> cache = new LinkedList<>();
+        final ExecutorService addersPool = Executors.newFixedThreadPool(1);
         try {
-            while (true) {
-                List<File> cachedFiles = new LinkedList<>();
-                while (cachedFiles.size() < ADD_FILE_CACHE_SIZE) {
-                    File foundFile = collectedFiles.take();
-                    if (foundFile.equals(FSWalker.FAKE_END_FILE)) {
-                        addFilesFromList(cachedFiles);
-                        return;
+            Files.walkFileTree(filePath, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String mimeType = Files.probeContentType(file);
+                    if(mimeType.startsWith(TEXT_MIME_PREFIX)) {
+                        cache.add(file.toFile().getAbsolutePath());
+                        if (cache.size() > ADD_FILE_CACHE_SIZE) {
+                            addersPool.execute(new Adder(new LinkedList<String>(cache)));
+                            cache.clear();
+                        }
                     }
-                    cachedFiles.add(foundFile);
+                    return FileVisitResult.CONTINUE;
                 }
-                addFilesFromList(cachedFiles);
-            }
-        } catch (InterruptedException e) {
-            throw new NotHandledEventException("files adding has been interrupted");
-        } finally {
-            fsWalker.stop();
+            });
+        } catch (IOException e) {
+            throw new NotHandledEventException("files adding failed due to IO error, details: " + e.getMessage());
         }
+        fileIndex.addFiles(cache);
+        addersPool.shutdown();
     }
 
     @Override
@@ -69,9 +73,16 @@ public class IndexUpdater implements IndexEventsHandler {
         }
     }
 
-    private void addFilesFromList(List<File> filesList) {
-        for(File f : filesList) {
-            fileIndex.addFile(f.getAbsolutePath());
+    private class Adder implements Runnable {
+        private List<String> filesList;
+
+        public Adder(List<String> filesList) {
+            this.filesList = filesList;
+        }
+
+        @Override
+        public void run() {
+            fileIndex.addFiles(filesList);
         }
     }
 }
