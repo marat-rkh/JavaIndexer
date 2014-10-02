@@ -5,10 +5,7 @@ import indexer.tokenizer.Token;
 import indexer.tokenizer.Tokenizer;
 import indexer.utils.PathUtils;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -171,7 +168,7 @@ public class HashFileIndex implements FileIndex {
 
     private List<Token> readTokens(String filePath) {
         List<Token> tokens;
-        try (Reader reader = new FileReader(filePath)) {
+        try (Reader reader = new BufferedReader(new FileReader(filePath))) {
             tokens = tokenizer.tokenize(reader);
         } catch (IOException e) {
             return null;
