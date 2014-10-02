@@ -28,5 +28,9 @@ public class FSMonitorsManagerTest extends TmpFsCreator{
         public void onMonitorRestart(Path monitorsDirectory) throws NotHandledEventException {}
         @Override
         public void onMonitorDown(Path monitorsDirectory) throws NotHandledEventException {}
+        @Override
+        public boolean isMonitorDown() {
+            return false;
+        }
     }
 }

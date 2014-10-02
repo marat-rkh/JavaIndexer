@@ -3,6 +3,7 @@ package indexer;
 import indexer.exceptions.InconsistentIndexException;
 import indexer.exceptions.IndexClosedException;
 import indexer.exceptions.NotHandledEventException;
+import indexer.fsmonitor.FSMonitorLifecycleHandler;
 import indexer.fsmonitor.FSMonitorsManager;
 import indexer.fsmonitor.IndexMonitorHandler;
 import indexer.handler.IndexEventsHandler;
@@ -35,9 +36,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class FSIndexer implements AutoCloseable {
     private final FileIndex fileIndex;
-    private final IndexEventsHandler indexUpdater;
+    private final IndexEventsHandler indexEventsHandler;
+    private final FSMonitorLifecycleHandler fsMonitorLifecycleHandler;
     private final FSMonitorsManager monitorsManager;
-    private final IndexMonitorHandler indexMonitorHandler;
 
     private boolean isClosed = false;
 
@@ -45,11 +46,12 @@ public class FSIndexer implements AutoCloseable {
 
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    public FSIndexer(Tokenizer tokenizer, OutputStream traceStream) {
-        fileIndex = new ConcurrentHashFileIndex(tokenizer);
-        indexUpdater = new IndexUpdater(fileIndex);
-        indexMonitorHandler = new IndexMonitorHandler(indexUpdater);
-        monitorsManager = new FSMonitorsManager(indexUpdater, indexMonitorHandler, traceStream);
+    public FSIndexer(FileIndex fileIndex, IndexEventsHandler indexEventsHandler,
+                     FSMonitorLifecycleHandler fsMonitorLifecycleHandler, OutputStream traceStream) {
+        this.fileIndex = fileIndex;
+        this.indexEventsHandler = indexEventsHandler;
+        this.fsMonitorLifecycleHandler = fsMonitorLifecycleHandler;
+        this.monitorsManager = new FSMonitorsManager(indexEventsHandler, fsMonitorLifecycleHandler, traceStream);
     }
 
     /**
@@ -84,7 +86,7 @@ public class FSIndexer implements AutoCloseable {
             checkState();
             Path path = Paths.get(filePath);
             try {
-                indexUpdater.onFilesAddedEvent(path);
+                indexEventsHandler.onFilesAddedEvent(path);
             } catch (NotHandledEventException e) {
                 throw new IOException("IO errors occurred while adding, details: " + e.getMessage());
             }
@@ -111,7 +113,7 @@ public class FSIndexer implements AutoCloseable {
             checkState();
             Path path = Paths.get(filePath);
             try {
-                indexUpdater.onFilesRemovedEvent(path);
+                indexEventsHandler.onFilesRemovedEvent(path);
             } catch (NotHandledEventException e) {
                 throw new IOException("IO errors occurred while removing, details: " + e.getMessage());
             }
@@ -155,7 +157,7 @@ public class FSIndexer implements AutoCloseable {
     private void checkState() throws IndexClosedException, InconsistentIndexException {
         if(isClosed) {
             throw new IndexClosedException();
-        } else if(indexMonitorHandler.isSomeMonitorDown() || monitorsManager.isErrorOccurred()) {
+        } else if(fsMonitorLifecycleHandler.isMonitorDown() || monitorsManager.isErrorOccurred()) {
             throw new InconsistentIndexException("Index has become inconsistent due to filesystem updating errors");
         }
     }

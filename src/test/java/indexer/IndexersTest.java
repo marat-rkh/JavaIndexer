@@ -12,10 +12,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
-public class FSIndexerTest extends TmpFsCreator {
+public class IndexersTest extends TmpFsCreator {
     @Test
     public void testSearch() throws Exception {
-        final FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), null);
+        final FSIndexer fsIndexer = Indexers.newSimpleFsIndexer(new WordsTokenizer(), null);
         fsIndexer.add(tempFolder.getRoot().getAbsolutePath());
         final AtomicInteger counter = new AtomicInteger(0);
         Runnable searchQuery = createSearchRunnable(fsIndexer, counter, new Word("file1"));
@@ -26,7 +26,7 @@ public class FSIndexerTest extends TmpFsCreator {
 
     @Test
     public void testReadQueries() throws Exception {
-        final FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), null);
+        final FSIndexer fsIndexer = Indexers.newSimpleFsIndexer(new WordsTokenizer(), null);
         fsIndexer.add(tempFolder.getRoot().getAbsolutePath());
         final AtomicInteger searchCounter = new AtomicInteger(0);
         Runnable searchQuery1 = createSearchRunnable(fsIndexer, searchCounter, new Word("file1"));
@@ -43,7 +43,7 @@ public class FSIndexerTest extends TmpFsCreator {
 
     @Test
     public void testAdd() throws Exception {
-        final FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), null);
+        final FSIndexer fsIndexer = Indexers.newSimpleFsIndexer(new WordsTokenizer(), null);
         final AtomicInteger addCounter = new AtomicInteger(0);
         Runnable add1 = createAddRunnable(fsIndexer, addCounter, dir1.getAbsolutePath());
         Runnable add2 = createAddRunnable(fsIndexer, addCounter, dir2SubFile1.getAbsolutePath());
@@ -55,7 +55,7 @@ public class FSIndexerTest extends TmpFsCreator {
 
     @Test
     public void testRemove() throws Exception {
-        final FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), null);
+        final FSIndexer fsIndexer = Indexers.newSimpleFsIndexer(new WordsTokenizer(), null);
         fsIndexer.add(tempFolder.getRoot().getAbsolutePath());
         final AtomicInteger removeCounter = new AtomicInteger(0);
         Runnable rm1 = createRemoveRunnable(fsIndexer, removeCounter, dir1.getAbsolutePath());
@@ -68,7 +68,7 @@ public class FSIndexerTest extends TmpFsCreator {
 
     @Test
     public void testReadWrite() throws Exception {
-        final FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), null);
+        final FSIndexer fsIndexer = Indexers.newSimpleFsIndexer(new WordsTokenizer(), null);
         fsIndexer.add(dir1.getAbsolutePath());
         fsIndexer.add(dir2.getAbsolutePath());
         final AtomicInteger searchCounter = new AtomicInteger(0);
@@ -88,7 +88,7 @@ public class FSIndexerTest extends TmpFsCreator {
 
     @Test
     public void testFastQueries() throws Exception {
-        final FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), null);
+        final FSIndexer fsIndexer = Indexers.newSimpleFsIndexer(new WordsTokenizer(), null);
         fsIndexer.add(dir2.getAbsolutePath());
         final AtomicInteger searchCounter = new AtomicInteger(0);
         final int repeats = 10000;
@@ -104,7 +104,7 @@ public class FSIndexerTest extends TmpFsCreator {
 
     @Test
     public void testAllQueries() throws Exception {
-        final FSIndexer fsIndexer = new FSIndexer(new WordsTokenizer(), null);
+        final FSIndexer fsIndexer = Indexers.newSimpleFsIndexer(new WordsTokenizer(), null);
         fsIndexer.add(dir2.getAbsolutePath());
         assertTrue(fsIndexer.containsFile(dir2SubFile1.getAbsolutePath()));
         assertEquals(1, fsIndexer.search(new Word("dolor")).size());

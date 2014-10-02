@@ -14,4 +14,5 @@ import java.nio.file.Path;
 public interface FSMonitorLifecycleHandler {
     public void onMonitorRestart(Path monitorsDirectory) throws NotHandledEventException;
     public void onMonitorDown(Path monitorsDirectory) throws NotHandledEventException;
+    public boolean isMonitorDown();
 }

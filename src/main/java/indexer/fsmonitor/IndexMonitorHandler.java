@@ -48,12 +48,12 @@ public class IndexMonitorHandler implements FSMonitorLifecycleHandler {
     }
 
     /**
-     * Checks if onMonitorDown method has been called at least once
+     * Checks if onMonitorDown method has been already called
      *
-     * @return {@code true} if onMonitorDown method has been called at least once
+     * @return {@code true} if onMonitorDown method has been already called
      *         {@code false} otherwise
      */
-    public boolean isSomeMonitorDown() {
+    public boolean isMonitorDown() {
         return monitorIsDown;
     }
 }
