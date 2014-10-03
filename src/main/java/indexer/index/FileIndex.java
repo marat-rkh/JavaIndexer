@@ -14,8 +14,9 @@ public interface FileIndex {
 
     public boolean addFile(String filePath);
     public void addFiles(List<String> filesPaths);
-    public boolean removeFileReadingDisk(String filePath);
-    public void removeFileIteratingAll(String filePath);
+    //    public boolean removeFileReadingDisk(String filePath);
+    public void removeFile(String filePath);
+    public void forceRemoves();
     public boolean handleFileModification(String filePath) throws InconsistentIndexException;
 
     public boolean containsFile(String filePath);
