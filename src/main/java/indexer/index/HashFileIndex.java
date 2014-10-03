@@ -215,20 +215,6 @@ public class HashFileIndex implements FileIndex {
         return false;
     }
 
-//    private <K, E> boolean putInMap(Map<K, LinkedList<E>> map, K key, E newLinkedListEntry) {
-//        LinkedList<E> currentValue = map.get(key);
-//        if(currentValue == null) {
-//            currentValue = new LinkedList<>();
-//            currentValue.add(newLinkedListEntry);
-//            map.put(key, currentValue);
-//            return true;
-//        } else if(currentValue.getLast() != newLinkedListEntry) {
-//            currentValue.add(newLinkedListEntry);
-//            return true;
-//        }
-//        return false;
-//    }
-
     private void removeChildren(Path parentPath, LinkedList<Long> filesId) {
         Iterator<Long> it = filesId.iterator();
         while(it.hasNext()) {

@@ -1,8 +1,12 @@
 package indexer;
 
+import indexer.exceptions.InconsistentIndexException;
+import indexer.exceptions.IndexClosedException;
+import indexer.tokenizer.Word;
 import indexer.tokenizer.WordsTokenizer;
 
 import java.io.*;
+import java.util.List;
 
 /**
  * Created by mrx on 27.09.14.

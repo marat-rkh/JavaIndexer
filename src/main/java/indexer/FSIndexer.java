@@ -20,6 +20,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -45,6 +46,8 @@ public class FSIndexer implements AutoCloseable {
     private final int MONITOR_RESTARTS_NUMBER = 3;
 
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final Lock readLock = readWriteLock.readLock();
+    private final Lock writeLock = readWriteLock.writeLock();
 
     public FSIndexer(FileIndex fileIndex, IndexEventsHandler indexEventsHandler,
                      FSMonitorLifecycleHandler fsMonitorLifecycleHandler, OutputStream traceStream) {
@@ -63,12 +66,12 @@ public class FSIndexer implements AutoCloseable {
      * @throws InconsistentIndexException if method is called after filesystem updating errors have been occurred
      */
     public List<String> search(Token tokenToFind) throws IndexClosedException, InconsistentIndexException {
-        readWriteLock.readLock().lock();
+        readLock.lock();
         try {
             checkState();
             return fileIndex.search(tokenToFind);
         } finally {
-            readWriteLock.readLock().unlock();
+            readLock.unlock();
         }
     }
 
@@ -81,7 +84,7 @@ public class FSIndexer implements AutoCloseable {
      * @throws IOException if IO errors occurred while adding
      */
     public void add(String filePath) throws IndexClosedException, InconsistentIndexException, IOException {
-        readWriteLock.readLock().lock();
+        readLock.lock();
         try {
             checkState();
             Path path = Paths.get(filePath);
@@ -95,7 +98,7 @@ public class FSIndexer implements AutoCloseable {
             }
             monitorsManager.addMonitor(path, MONITOR_RESTARTS_NUMBER);
         } finally {
-            readWriteLock.readLock().unlock();
+            readLock.unlock();
         }
     }
 
@@ -108,7 +111,7 @@ public class FSIndexer implements AutoCloseable {
      * @throws IOException if IO errors occurred while removing
      */
     public void remove(String filePath) throws IndexClosedException, InconsistentIndexException, IOException {
-        readWriteLock.writeLock().lock();
+        writeLock.lock();
         try {
             checkState();
             Path path = Paths.get(filePath);
@@ -122,7 +125,7 @@ public class FSIndexer implements AutoCloseable {
             }
             monitorsManager.removeMonitor(path);
         } finally {
-            readWriteLock.writeLock().unlock();
+            writeLock.unlock();
         }
     }
 
@@ -135,22 +138,22 @@ public class FSIndexer implements AutoCloseable {
      * @throws InconsistentIndexException if method is called after filesystem updating errors have been occurred
      */
     public boolean containsFile(String filePath) throws IndexClosedException, InconsistentIndexException {
-        readWriteLock.readLock().lock();
+        readLock.lock();
         try {
             checkState();
             return fileIndex.containsFile(filePath);
         } finally {
-            readWriteLock.readLock().unlock();
+            readLock.unlock();
         }
     }
 
     public void close() throws IOException {
-        readWriteLock.writeLock().lock();
+        writeLock.lock();
         try {
             monitorsManager.stopAllMonitors();
             isClosed = true;
         } finally {
-            readWriteLock.writeLock().unlock();
+            writeLock.unlock();
         }
     }
 

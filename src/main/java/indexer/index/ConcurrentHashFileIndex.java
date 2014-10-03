@@ -5,6 +5,7 @@ import indexer.tokenizer.Token;
 import indexer.tokenizer.Tokenizer;
 
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -17,6 +18,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ConcurrentHashFileIndex implements FileIndex {
     private final HashFileIndex index;
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final Lock readLock = readWriteLock.readLock();
+    private final Lock writeLock = readWriteLock.writeLock();
 
     public ConcurrentHashFileIndex(Tokenizer tokenizer) {
         this.index = new HashFileIndex(tokenizer);
@@ -24,81 +27,81 @@ public class ConcurrentHashFileIndex implements FileIndex {
 
     @Override
     public List<String> search(Token tokenToFind) {
-        readWriteLock.readLock().lock();
+        readLock.lock();
         try {
             return index.search(tokenToFind);
         } finally {
-            readWriteLock.readLock().unlock();
+            readLock.unlock();
         }
     }
 
     @Override
     public boolean addFile(String filePath) {
-        readWriteLock.writeLock().lock();
+        writeLock.lock();
         try {
             return index.addFile(filePath);
         } finally {
-            readWriteLock.writeLock().unlock();
+            writeLock.unlock();
         }
     }
 
     @Override
     public void addFiles(List<String> filesPaths) {
-        readWriteLock.writeLock().lock();
+        writeLock.lock();
         try {
             index.addFiles(filesPaths);
         } finally {
-            readWriteLock.writeLock().unlock();
+            writeLock.unlock();
         }
     }
 
     @Override
     public void removeFile(String filePath) {
-        readWriteLock.writeLock().lock();
+        writeLock.lock();
         try {
             index.removeFile(filePath);
         } finally {
-            readWriteLock.writeLock().unlock();
+            writeLock.unlock();
         }
     }
 
     @Override
     public void forceRemoves() {
-        readWriteLock.writeLock().lock();
+        writeLock.lock();
         try {
             index.forceRemoves();
         } finally {
-            readWriteLock.writeLock().unlock();
+            writeLock.unlock();
         }
     }
 
     @Override
     public boolean handleFileModification(String filePath) throws InconsistentIndexException {
-        readWriteLock.writeLock().lock();
+        writeLock.lock();
         try {
             return index.handleFileModification(filePath);
         } finally {
-            readWriteLock.writeLock().unlock();
+            writeLock.unlock();
         }
     }
 
     @Override
     public boolean containsFile(String filePath) {
-        readWriteLock.readLock().lock();
+        readLock.lock();
         try {
             return index.containsFile(filePath);
         } finally {
-            readWriteLock.readLock().unlock();
+            readLock.unlock();
         }
     }
 
     @Override
     public void removeDirectory(String dirPath) {
-        readWriteLock.writeLock().lock();
+        writeLock.lock();
         try {
             index.removeDirectory(dirPath);
         } finally {
-            readWriteLock.writeLock().unlock();
+            writeLock.unlock();
         }
     }
 }

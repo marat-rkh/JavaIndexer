@@ -19,7 +19,9 @@ public class ExampleRepl {
     private final List<Thread> execThreads = new LinkedList<>();
     private final Queue<String> resultsQueue = new ConcurrentLinkedQueue<>();
     private final FSIndexer fsIndexer;
+
     private final AtomicInteger lastCommandId = new AtomicInteger(0);
+    private int activeTasksCounter = 0;
 
     private boolean isInconsistentIndexException = false;
     private String inconsistentIndexMsg = "";
@@ -49,6 +51,7 @@ public class ExampleRepl {
                     execThread.start();
                     execThreads.add(execThread);
                     System.out.println("Command #" + lastCommandId.get() + " is queued");
+                    activeTasksCounter += 1;
                     printCollectedResults();
                 } else {
                     showUnknownCommandMsg();
@@ -114,14 +117,17 @@ public class ExampleRepl {
     }
 
     private void printCollectedResults() {
-        System.out.println("Previous commands results:");
+        System.out.print("Previous commands results: ");
         if(resultsQueue.size() != 0) {
+            System.out.println();
             while (!resultsQueue.isEmpty()) {
                 System.out.println(resultsQueue.poll());
+                activeTasksCounter -= 1;
             }
         } else {
             System.out.println("no results");
         }
+        System.out.println("Active tasks: " + activeTasksCounter);
     }
 
     private void showUnknownCommandMsg() {

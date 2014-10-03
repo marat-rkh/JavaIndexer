@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * IndexEventsHandler interface implementation
@@ -22,7 +23,7 @@ import java.util.concurrent.Executors;
  */
 public class IndexUpdater implements IndexEventsHandler {
     private final FileIndex fileIndex;
-    private final int ADD_FILE_CACHE_SIZE = 60000;
+    private final int ADD_FILE_CACHE_SIZE = 1000;
     private final String TEXT_MIME_PREFIX = "text/";
 
     public IndexUpdater(FileIndex fileIndex) {
@@ -41,7 +42,7 @@ public class IndexUpdater implements IndexEventsHandler {
                     if(mimeType.startsWith(TEXT_MIME_PREFIX)) {
                         cache.add(file.toFile().getAbsolutePath());
                         if (cache.size() > ADD_FILE_CACHE_SIZE) {
-                            addersPool.execute(new Adder(new LinkedList<String>(cache)));
+                            addersPool.execute(new Adder(new LinkedList<>(cache)));
                             cache.clear();
                         }
                     }
@@ -52,7 +53,7 @@ public class IndexUpdater implements IndexEventsHandler {
             throw new NotHandledEventException("files adding failed due to IO error, details: " + e.getMessage());
         }
         fileIndex.addFiles(cache);
-        addersPool.shutdown();
+        waitAddersToFinish(addersPool);
     }
 
     @Override
@@ -70,6 +71,15 @@ public class IndexUpdater implements IndexEventsHandler {
             fileIndex.handleFileModification(filePath.toFile().getAbsolutePath());
         } catch (InconsistentIndexException e) {
             throw new NotHandledEventException("index has become inconsistent while modification");
+        }
+    }
+
+    private void waitAddersToFinish(ExecutorService addersPool) {
+        addersPool.shutdown();
+        try {
+            while (!addersPool.awaitTermination(1, TimeUnit.SECONDS)) { }
+        } catch (InterruptedException e) {
+            // suppressed
         }
     }
 
