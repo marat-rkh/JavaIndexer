@@ -22,7 +22,7 @@ import java.util.concurrent.Executors;
  */
 public class IndexUpdater implements IndexEventsHandler {
     private final FileIndex fileIndex;
-    private final int ADD_FILE_CACHE_SIZE = 10000;
+    private final int ADD_FILE_CACHE_SIZE = 60000;
     private final String TEXT_MIME_PREFIX = "text/";
 
     public IndexUpdater(FileIndex fileIndex) {
@@ -60,7 +60,7 @@ public class IndexUpdater implements IndexEventsHandler {
         if (Files.isDirectory(filePath)) {
             fileIndex.removeDirectory(filePath.toFile().getAbsolutePath());
         } else {
-            fileIndex.removeFileIteratingAll(filePath.toFile().getAbsolutePath());
+            fileIndex.removeFile(filePath.toFile().getAbsolutePath());
         }
     }
 

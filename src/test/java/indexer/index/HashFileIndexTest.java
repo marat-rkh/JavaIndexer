@@ -65,28 +65,28 @@ public class HashFileIndexTest extends TmpFsCreator {
         assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
         assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
 
-        hashFileIndex.removeFileReadingDisk(dir2SubFile1.getAbsolutePath());
+        hashFileIndex.removeFile(dir2SubFile1.getAbsolutePath());
 
         assertTrue(!hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
         assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 0);
     }
 
-    @Test
-    public void testRemoveFileIteratingAll() {
-        FileIndex hashFileIndex = new HashFileIndex(tokenizer);
-        hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
-
-        assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
-        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
-
-        if(!dir2SubFile1.delete()) {
-            fail("Manual deleting problem occurred");
-        }
-        hashFileIndex.removeFileIteratingAll(dir2SubFile1.getAbsolutePath());
-
-        assertTrue(!hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
-        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 0);
-    }
+//    @Test
+//    public void testRemoveFileIteratingAll() {
+//        FileIndex hashFileIndex = new HashFileIndex(tokenizer);
+//        hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
+//
+//        assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
+//        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
+//
+//        if(!dir2SubFile1.delete()) {
+//            fail("Manual deleting problem occurred");
+//        }
+//        hashFileIndex.removeFileIteratingAll(dir2SubFile1.getAbsolutePath());
+//
+//        assertTrue(!hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
+//        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 0);
+//    }
 
     @Test
     public void testHandleFileModificationAppend() throws InconsistentIndexException {

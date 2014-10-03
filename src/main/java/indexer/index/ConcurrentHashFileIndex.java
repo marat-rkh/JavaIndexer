@@ -36,11 +36,10 @@ public class ConcurrentHashFileIndex implements FileIndex {
     public boolean addFile(String filePath) {
         readWriteLock.writeLock().lock();
         try {
-            index.addFile(filePath);
+            return index.addFile(filePath);
         } finally {
             readWriteLock.writeLock().unlock();
         }
-        return false;
     }
 
     @Override
@@ -54,35 +53,33 @@ public class ConcurrentHashFileIndex implements FileIndex {
     }
 
     @Override
-    public void removeFileIteratingAll(String filePath) {
+    public void removeFile(String filePath) {
         readWriteLock.writeLock().lock();
         try {
-            index.removeFileIteratingAll(filePath);
+            index.removeFile(filePath);
         } finally {
             readWriteLock.writeLock().unlock();
         }
     }
 
     @Override
-    public boolean removeFileReadingDisk(String filePath) {
+    public void forceRemoves() {
         readWriteLock.writeLock().lock();
         try {
-            index.removeFileReadingDisk(filePath);
+            index.forceRemoves();
         } finally {
             readWriteLock.writeLock().unlock();
         }
-        return false;
     }
 
     @Override
     public boolean handleFileModification(String filePath) throws InconsistentIndexException {
         readWriteLock.writeLock().lock();
         try {
-            index.handleFileModification(filePath);
+            return index.handleFileModification(filePath);
         } finally {
             readWriteLock.writeLock().unlock();
         }
-        return false;
     }
 
     @Override

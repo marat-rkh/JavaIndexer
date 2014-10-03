@@ -62,8 +62,9 @@ public class HashFileIndex implements FileIndex {
                 if (tokens == null) {
                     return false;
                 }
-                int putTokens = putTokensToMap(tokens, filePath);
-                idFileMap.put(lastAddedFileId.incrementAndGet(), new FileEntry(filePath, putTokens));
+                lastAddedFileId.incrementAndGet();
+                int putTokens = putTokensToMap(tokens);
+                idFileMap.put(lastAddedFileId.get(), new FileEntry(filePath, putTokens));
                 fileIdMap.put(filePath, lastAddedFileId.get());
             }
             return true;
@@ -190,29 +191,43 @@ public class HashFileIndex implements FileIndex {
         return tokens;
     }
 
-    private int putTokensToMap(List<Token> tokens, String filePath) {
+    private int putTokensToMap(List<Token> tokens) {
         int putTokens = 0;
         for(Token tokenToAdd : tokens) {
-            if(putInMap(tokenFilesMap, tokenToAdd, lastAddedFileId.get())) {
+            if(putInMap(tokenToAdd, lastAddedFileId.get())) {
                 putTokens += 1;
             }
         }
         return putTokens;
     }
 
-    private <K, E> boolean putInMap(Map<K, LinkedList<E>> map, K key, E newLinkedListEntry) {
-        LinkedList<E> currentValue = map.get(key);
-        if(currentValue == null) {
-            currentValue = new LinkedList<E>();
-            currentValue.add(newLinkedListEntry);
-            map.put(key, currentValue);
+    private boolean putInMap(Token token, long newId) {
+        LinkedList<Long> filesId = tokenFilesMap.get(token);
+        if(filesId == null) {
+            filesId = new LinkedList<>();
+            filesId.add(newId);
+            tokenFilesMap.put(token, filesId);
             return true;
-        } else if(currentValue.getLast() != newLinkedListEntry) {
-            currentValue.add(newLinkedListEntry);
+        } else if(filesId.getLast() != newId) {
+            filesId.add(newId);
             return true;
         }
         return false;
     }
+
+//    private <K, E> boolean putInMap(Map<K, LinkedList<E>> map, K key, E newLinkedListEntry) {
+//        LinkedList<E> currentValue = map.get(key);
+//        if(currentValue == null) {
+//            currentValue = new LinkedList<>();
+//            currentValue.add(newLinkedListEntry);
+//            map.put(key, currentValue);
+//            return true;
+//        } else if(currentValue.getLast() != newLinkedListEntry) {
+//            currentValue.add(newLinkedListEntry);
+//            return true;
+//        }
+//        return false;
+//    }
 
     private void removeChildren(Path parentPath, LinkedList<Long> filesId) {
         Iterator<Long> it = filesId.iterator();
