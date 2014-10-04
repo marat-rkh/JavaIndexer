@@ -133,24 +133,19 @@ public class HashFileIndex implements FileIndex {
         return fileIdMap.containsKey(filePath);
     }
 
-    /**
-     * Removes specified directory from index additionally performing all postponed file removes
-     *
-     * @param dirPath directory to remove
-     */
     @Override
     public void removeDirectory(String dirPath) {
         Path path = Paths.get(dirPath);
-        Iterator<Map.Entry<Token, LinkedList<Long>>> it = tokenFilesMap.entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry<Token, LinkedList<Long>> entry = it.next();
-            doPostponedRemoves(entry.getValue());
-            removeChildren(path, entry.getValue());
-            if(entry.getValue().isEmpty()) {
+        Iterator<Map.Entry<String, Long>> it = fileIdMap.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Long> entry = it.next();
+            Path filePath = Paths.get(entry.getKey());
+            Long id = entry.getValue();
+            if(!PathUtils.pathsAreEqual(path, filePath) && PathUtils.firstPathIsParent(path, filePath)) {
+                idFileMap.get(id).setRemoved();
                 it.remove();
             }
         }
-        removeFromFileIdMaps(path);
     }
 
     private void doPostponedRemoves(LinkedList<Long> tokenFiles) {
@@ -215,26 +210,26 @@ public class HashFileIndex implements FileIndex {
         return false;
     }
 
-    private void removeChildren(Path parentPath, LinkedList<Long> filesId) {
-        Iterator<Long> it = filesId.iterator();
-        while(it.hasNext()) {
-            Path filePath = Paths.get(idFileMap.get(it.next()).getFilePath());
-            if(!PathUtils.pathsAreEqual(parentPath, filePath) && PathUtils.firstPathIsParent(parentPath, filePath)) {
-                it.remove();
-            }
-        }
-    }
+//    private void removeChildren(Path parentPath, LinkedList<Long> filesId) {
+//        Iterator<Long> it = filesId.iterator();
+//        while(it.hasNext()) {
+//            Path filePath = Paths.get(idFileMap.get(it.next()).getFilePath());
+//            if(!PathUtils.pathsAreEqual(parentPath, filePath) && PathUtils.firstPathIsParent(parentPath, filePath)) {
+//                it.remove();
+//            }
+//        }
+//    }
 
-    private void removeFromFileIdMaps(Path path) {
-        Iterator<Map.Entry<String, Long>> it = fileIdMap.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String, Long> entry = it.next();
-            Path filePath = Paths.get(entry.getKey());
-            Long id = entry.getValue();
-            if(!PathUtils.pathsAreEqual(path, filePath) && PathUtils.firstPathIsParent(path, filePath)) {
-                idFileMap.remove(id);
-                it.remove();
-            }
-        }
-    }
+//    private void removeFromFileIdMaps(Path path) {
+//        Iterator<Map.Entry<String, Long>> it = fileIdMap.entrySet().iterator();
+//        while (it.hasNext()) {
+//            Map.Entry<String, Long> entry = it.next();
+//            Path filePath = Paths.get(entry.getKey());
+//            Long id = entry.getValue();
+//            if(!PathUtils.pathsAreEqual(path, filePath) && PathUtils.firstPathIsParent(path, filePath)) {
+//                idFileMap.get(id).setRemoved();
+//                it.remove();
+//            }
+//        }
+//    }
 }
