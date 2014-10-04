@@ -39,7 +39,7 @@ public class IndexUpdater implements IndexEventsHandler {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     String mimeType = Files.probeContentType(file);
-                    if(mimeType.startsWith(TEXT_MIME_PREFIX)) {
+                    if(mimeType != null && mimeType.startsWith(TEXT_MIME_PREFIX)) {
                         cache.add(file.toFile().getAbsolutePath());
                         if (cache.size() > ADD_FILE_CACHE_SIZE) {
                             addersPool.execute(new Adder(new LinkedList<>(cache)));
