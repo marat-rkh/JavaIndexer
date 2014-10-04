@@ -209,27 +209,4 @@ public class HashFileIndex implements FileIndex {
         }
         return false;
     }
-
-//    private void removeChildren(Path parentPath, LinkedList<Long> filesId) {
-//        Iterator<Long> it = filesId.iterator();
-//        while(it.hasNext()) {
-//            Path filePath = Paths.get(idFileMap.get(it.next()).getFilePath());
-//            if(!PathUtils.pathsAreEqual(parentPath, filePath) && PathUtils.firstPathIsParent(parentPath, filePath)) {
-//                it.remove();
-//            }
-//        }
-//    }
-
-//    private void removeFromFileIdMaps(Path path) {
-//        Iterator<Map.Entry<String, Long>> it = fileIdMap.entrySet().iterator();
-//        while (it.hasNext()) {
-//            Map.Entry<String, Long> entry = it.next();
-//            Path filePath = Paths.get(entry.getKey());
-//            Long id = entry.getValue();
-//            if(!PathUtils.pathsAreEqual(path, filePath) && PathUtils.firstPathIsParent(path, filePath)) {
-//                idFileMap.get(id).setRemoved();
-//                it.remove();
-//            }
-//        }
-//    }
 }

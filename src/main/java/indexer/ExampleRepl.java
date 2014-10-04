@@ -5,6 +5,7 @@ import indexer.exceptions.IndexClosedException;
 import indexer.tokenizer.Word;
 import indexer.utils.ReadWriter;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -70,7 +71,7 @@ public class ExampleRepl {
         } else {
             if(command.length >= 2) {
                 IndexCommandsRunner runner = new IndexCommandsRunner(lastCommandId.incrementAndGet(),
-                        command[0], command[1]);
+                        command[0], command[1].trim());
                 Thread execThread = new Thread(runner);
                 execThread.start();
                 execThreads.add(execThread);

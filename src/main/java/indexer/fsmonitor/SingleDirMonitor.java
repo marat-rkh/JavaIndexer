@@ -148,7 +148,7 @@ public class SingleDirMonitor implements FSMonitor {
                 registerDirectory(path);
             }
             indexEventsHandler.onFilesAddedEvent(path);
-            traceIfPossible("FS event 'create': " + path.toString() + '\n');
+            traceIfPossible("FS event 'create': " + path.toString());
         } catch (IOException e) {
             throw new NotHandledEventException("created directory registration failed due to IO error, details: " +
                     e.getMessage());
@@ -156,11 +156,11 @@ public class SingleDirMonitor implements FSMonitor {
     }
     private void handleDeleteEvent(Path path) throws NotHandledEventException {
         indexEventsHandler.onFilesRemovedEvent(path);
-        traceIfPossible("FS event 'delete': " + path.toString() + '\n');
+        traceIfPossible("FS event 'delete': " + path.toString());
     }
     private void handleModifyEvent(Path path) throws NotHandledEventException {
         indexEventsHandler.onFilesModifiedEvent(path);
-        traceIfPossible("FS event 'modify': " + path.toString() + '\n');
+        traceIfPossible("FS event 'modify': " + path.toString());
     }
 
     private void traceIfPossible(String msg) {
