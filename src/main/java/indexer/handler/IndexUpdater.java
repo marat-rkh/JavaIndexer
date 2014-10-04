@@ -58,7 +58,7 @@ public class IndexUpdater implements IndexEventsHandler {
 
     @Override
     public void onFilesRemovedEvent(Path filePath) {
-        if(filePath.toFile().exists() && !Files.isDirectory(filePath)) {
+        if(fileIndex.containsFile(filePath.toFile().getAbsolutePath())) {
             fileIndex.removeFile(filePath.toFile().getAbsolutePath());
         } else {
             fileIndex.removeDirectory(filePath.toFile().getAbsolutePath());
