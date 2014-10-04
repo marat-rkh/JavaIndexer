@@ -2,6 +2,7 @@ package indexer.fsmonitor;
 
 import indexer.exceptions.NotHandledEventException;
 import indexer.handler.IndexEventsHandler;
+import indexer.utils.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,7 +27,7 @@ public class SingleDirMonitor implements FSMonitor {
     private final WatchService watchService;
     private final Map<WatchKey, Path> keyPathMap = new HashMap<WatchKey, Path>();
     private final IndexEventsHandler indexEventsHandler;
-    private OutputStream traceStream = null;
+    private Logger logger = null;
 
     /**
      * Constructor with parameters. Note that it expects directory as the first argument and throws
@@ -50,10 +51,10 @@ public class SingleDirMonitor implements FSMonitor {
         registerDirectory(directory);
     }
 
-    public SingleDirMonitor(Path directory, IndexEventsHandler indexEventsHandler, OutputStream traceStream)
+    public SingleDirMonitor(Path directory, IndexEventsHandler indexEventsHandler, Logger logger)
             throws IOException {
         this(directory, indexEventsHandler);
-        this.traceStream = traceStream;
+        this.logger = logger;
     }
 
     @Override
@@ -163,9 +164,9 @@ public class SingleDirMonitor implements FSMonitor {
     }
 
     private void traceIfPossible(String msg) {
-        if(traceStream != null) {
+        if(logger != null) {
             try {
-                traceStream.write(msg.getBytes());
+                logger.log(msg);
             } catch (IOException e) {
                 // suppressed
             }

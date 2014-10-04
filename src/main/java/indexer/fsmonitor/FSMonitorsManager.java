@@ -2,6 +2,7 @@ package indexer.fsmonitor;
 
 import indexer.exceptions.NotHandledEventException;
 import indexer.handler.IndexEventsHandler;
+import indexer.utils.Logger;
 import indexer.utils.PathUtils;
 
 import java.io.IOException;
@@ -24,15 +25,15 @@ public class FSMonitorsManager {
     private final Map<Path, FSMonitor> monitors = new HashMap<Path, FSMonitor>();
     private final IndexEventsHandler indexEventsHandler;
     private final FSMonitorLifecycleHandler monitorLifecycleHandler;
-    private final OutputStream traceStream;
+    private final Logger logger;
 
     private boolean errorOccurred = false;
 
     public FSMonitorsManager(IndexEventsHandler indexEventsHandler, FSMonitorLifecycleHandler monitorHandler,
-                             OutputStream traceStream) {
+                             Logger logger) {
         this.indexEventsHandler = indexEventsHandler;
         this.monitorLifecycleHandler = monitorHandler;
-        this.traceStream = traceStream;
+        this.logger = logger;
     }
 
     /**
@@ -50,7 +51,7 @@ public class FSMonitorsManager {
     public synchronized boolean addMonitor(Path directory, int restartsCounter) throws IOException {
         if(addingIsNeeded(directory)) {
             try {
-                FSMonitor newMonitor = new SingleDirMonitor(directory, indexEventsHandler, traceStream);
+                FSMonitor newMonitor = new SingleDirMonitor(directory, indexEventsHandler, logger);
                 monitors.put(directory, newMonitor);
                 Thread monitorThread = new Thread(new MonitorRunner(newMonitor, restartsCounter));
                 monitorThread.start();

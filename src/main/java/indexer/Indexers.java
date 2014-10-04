@@ -7,6 +7,7 @@ import indexer.handler.IndexUpdater;
 import indexer.index.ConcurrentHashFileIndex;
 import indexer.index.FileIndex;
 import indexer.tokenizer.Tokenizer;
+import indexer.utils.Logger;
 
 import java.io.OutputStream;
 
@@ -16,10 +17,10 @@ import java.io.OutputStream;
  * @see indexer.FSIndexer
  */
 public class Indexers {
-    public static FSIndexer newSimpleFsIndexer(Tokenizer tokenizer, OutputStream traceStream) {
+    public static FSIndexer newSimpleFsIndexer(Tokenizer tokenizer, Logger logger) {
         FileIndex fileIndex = new ConcurrentHashFileIndex(tokenizer);
         IndexEventsHandler indexUpdater = new IndexUpdater(fileIndex);
         FSMonitorLifecycleHandler fsMonitorLifecycleHandler = new IndexMonitorHandler(indexUpdater);
-        return new FSIndexer(fileIndex, indexUpdater, fsMonitorLifecycleHandler, traceStream);
+        return new FSIndexer(fileIndex, indexUpdater, fsMonitorLifecycleHandler, logger);
     }
 }

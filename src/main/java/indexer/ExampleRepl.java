@@ -3,8 +3,9 @@ package indexer;
 import indexer.exceptions.InconsistentIndexException;
 import indexer.exceptions.IndexClosedException;
 import indexer.tokenizer.Word;
+import indexer.utils.ReadWriter;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,54 +27,63 @@ public class ExampleRepl {
     private boolean isInconsistentIndexException = false;
     private String inconsistentIndexMsg = "";
     private boolean isIndexClosedException = false;
+    private String postponedExceptionMessage = null;
+    
+    private ReadWriter readWriter = null;
 
-    public ExampleRepl(FSIndexer fsIndexer) {
+    public ExampleRepl(FSIndexer fsIndexer, ReadWriter readWriter) throws Exception {
         this.fsIndexer = fsIndexer;
+        this.readWriter = readWriter;
     }
 
-    public void start(String commandsFilePath) {
-        showHelp();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(getStream(commandsFilePath)))) {
+    public void start() {
+        try {
+            showHelp();
             while (true) {
                 checkState();
                 removeStoppedThreads();
-                String[] command = readCommand(br);
-                if (command[0].equals("p")) {
-                    printCollectedResults();
-                } else if (command[0].equals("h")) {
-                    showHelp();
-                } else if (command[0].equals("q")) {
+                String[] command = readCommand();
+                if (!handleCommand(command)) {
+                    readWriter.println("Waiting active tasks to complete...");
                     return;
-                } else if (command.length >= 2) {
-                    IndexCommandsRunner runner = new IndexCommandsRunner(lastCommandId.incrementAndGet(),
-                                                                         command[0], command[1]);
-                    Thread execThread = new Thread(runner);
-                    execThread.start();
-                    execThreads.add(execThread);
-                    System.out.println("Command #" + lastCommandId.get() + " is queued");
-                    activeTasksCounter += 1;
-                    printCollectedResults();
-                } else {
-                    showUnknownCommandMsg();
                 }
             }
-        } catch (IOException e) {
-            System.out.println("IO error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            postponedExceptionMessage = e.getMessage();
         } finally {
-            System.out.println("Waiting active tasks to complete...");
-            for(Thread et : execThreads) {
-                try {
-                    et.join();
-                } catch (InterruptedException e) {
-                }
+            releaseResources();
+            if(postponedExceptionMessage != null) {
+                System.out.println("Error: " + postponedExceptionMessage);
+            } else {
+                System.out.println("Done");
             }
-            System.out.println("Done");
         }
     }
 
-    private void showHelp() {
+    private boolean handleCommand(String[] command) throws IOException {
+        if (command[0].equals("p")) {
+            printCollectedResults();
+        } else if (command[0].equals("h")) {
+            showHelp();
+        } else if (command[0].equals("q")) {
+            return false;
+        } else {
+            if(command.length >= 2) {
+                IndexCommandsRunner runner = new IndexCommandsRunner(lastCommandId.incrementAndGet(),
+                        command[0], command[1]);
+                Thread execThread = new Thread(runner);
+                execThread.start();
+                execThreads.add(execThread);
+            } else {
+                showUnknownCommandMsg();
+            }
+            activeTasksCounter += 1;
+            printCollectedResults();
+        }
+        return true;
+    }
+
+    private void showHelp() throws IOException {
         final String help = "Commands:\n" +
                 "a <file_or_dir_path> - add file or dir to index\n" +
                 "r <file_or_dir_path> - remove file or dir from index\n" +
@@ -82,14 +92,7 @@ public class ExampleRepl {
                 "p                    - show previous commands results\n" +
                 "h                    - show this help\n" +
                 "q                    - finish work";
-        System.out.println(help);
-    }
-
-    private InputStream getStream(String commandsFilePath) throws FileNotFoundException {
-        if(commandsFilePath == null) {
-            return System.in;
-        }
-        return new FileInputStream(commandsFilePath);
+        readWriter.println(help);
     }
 
     private void checkState() throws Exception {
@@ -110,28 +113,36 @@ public class ExampleRepl {
         }
     }
 
-    private String[] readCommand(BufferedReader br) throws IOException {
-        System.out.println("\n$Enter command:");
-        String input = br.readLine();
+    private String[] readCommand() throws IOException {
+        String input = readWriter.readLine();
         return input.split(" ", 2);
     }
 
-    private void printCollectedResults() {
-        System.out.print("Previous commands results: ");
+    private void printCollectedResults() throws IOException {
+        readWriter.print("Previous commands results: ");
         if(resultsQueue.size() != 0) {
-            System.out.println();
+            readWriter.println("");
             while (!resultsQueue.isEmpty()) {
-                System.out.println(resultsQueue.poll());
+                readWriter.println(resultsQueue.poll());
                 activeTasksCounter -= 1;
             }
         } else {
-            System.out.println("no results");
+            readWriter.println("no results");
         }
-        System.out.println("Active tasks: " + activeTasksCounter);
+        readWriter.println("Active tasks: " + activeTasksCounter);
     }
 
     private void showUnknownCommandMsg() {
         resultsQueue.offer("Unknown command");
+    }
+
+    private void releaseResources() {
+        for(Thread et : execThreads) {
+            try {
+                et.join();
+            } catch (InterruptedException e) {
+            } catch (Exception e) {}
+        }
     }
 
     private class IndexCommandsRunner implements Runnable {

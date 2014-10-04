@@ -12,6 +12,7 @@ import indexer.index.ConcurrentHashFileIndex;
 import indexer.index.FileIndex;
 import indexer.tokenizer.Token;
 import indexer.tokenizer.Tokenizer;
+import indexer.utils.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -50,11 +51,11 @@ public class FSIndexer implements AutoCloseable {
     private final Lock writeLock = readWriteLock.writeLock();
 
     public FSIndexer(FileIndex fileIndex, IndexEventsHandler indexEventsHandler,
-                     FSMonitorLifecycleHandler fsMonitorLifecycleHandler, OutputStream traceStream) {
+                     FSMonitorLifecycleHandler fsMonitorLifecycleHandler, Logger logger) {
         this.fileIndex = fileIndex;
         this.indexEventsHandler = indexEventsHandler;
         this.fsMonitorLifecycleHandler = fsMonitorLifecycleHandler;
-        this.monitorsManager = new FSMonitorsManager(indexEventsHandler, fsMonitorLifecycleHandler, traceStream);
+        this.monitorsManager = new FSMonitorsManager(indexEventsHandler, fsMonitorLifecycleHandler, logger);
     }
 
     /**
