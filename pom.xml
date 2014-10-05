@@ -37,6 +37,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
           <mainClass>indexer.Main</mainClass>
+          <cleanupDaemonThreads>false</cleanupDaemonThreads>
         </configuration>
       </plugin>
     </plugins>
