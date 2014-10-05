@@ -148,6 +148,18 @@ public class FSIndexer implements AutoCloseable {
         }
     }
 
+    public IndexEventsHandler getIndexEventsHandler() {
+        return indexEventsHandler;
+    }
+
+    public FileIndex getFileIndex() {
+        return fileIndex;
+    }
+
+    public FSMonitorLifecycleHandler getFsMonitorLifecycleHandler() {
+        return fsMonitorLifecycleHandler;
+    }
+
     public void close() throws IOException {
         writeLock.lock();
         try {

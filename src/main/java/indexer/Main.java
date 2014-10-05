@@ -13,7 +13,8 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
         try (ReadWriter readWriter = new ConsoleReadWriter();
-             FSIndexer fsIndexer = Indexers.newSimpleFsIndexer(new WordsTokenizer(), new ConsoleLogger(readWriter))) {
+             ExtendedFSIndexer fsIndexer =
+                     Indexers.newExtendedFSIndexer(new WordsTokenizer(), new ConsoleLogger(readWriter))) {
             ExampleRepl repl = new ExampleRepl(fsIndexer, readWriter);
             repl.start();
         } catch (Exception e) {

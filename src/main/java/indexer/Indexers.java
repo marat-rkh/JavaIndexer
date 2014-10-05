@@ -23,4 +23,11 @@ public class Indexers {
         FSMonitorLifecycleHandler fsMonitorLifecycleHandler = new IndexMonitorHandler(indexUpdater);
         return new FSIndexer(fileIndex, indexUpdater, fsMonitorLifecycleHandler, logger);
     }
+
+    public static ExtendedFSIndexer newExtendedFSIndexer(Tokenizer tokenizer, Logger logger) {
+        FileIndex fileIndex = new ConcurrentHashFileIndex(tokenizer);
+        IndexUpdater indexUpdater = new IndexUpdater(fileIndex);
+        FSMonitorLifecycleHandler fsMonitorLifecycleHandler = new IndexMonitorHandler(indexUpdater);
+        return new ExtendedFSIndexer(fileIndex, indexUpdater, fsMonitorLifecycleHandler, logger);
+    }
 }
