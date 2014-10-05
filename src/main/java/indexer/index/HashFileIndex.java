@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * FileIndex interface implementation based on HashMap.
+ * FileIndex interface implementation based on HashMap with lazy removes
  *
  * @see indexer.index.FileIndex
  */
@@ -29,6 +29,13 @@ public class HashFileIndex implements FileIndex {
         this.tokenizer = tokenizer;
     }
 
+    /**
+     * Searches files in index containing specified token. While collecting resulting list of file
+     * performs postponed file removes
+     *
+     * @param tokenToFind token to find in index
+     * @return            list of files containing specified token
+     */
     @Override
     public List<String> search(Token tokenToFind) {
         if(tokenToFind != null) {
@@ -72,6 +79,11 @@ public class HashFileIndex implements FileIndex {
         return false;
     }
 
+    /**
+     * Adds multiple files in index
+     *
+     * @param filesPaths list of files to add
+     */
     @Override
     public void addFiles(List<String> filesPaths) {
         for(String filePath : filesPaths) {
@@ -79,6 +91,12 @@ public class HashFileIndex implements FileIndex {
         }
     }
 
+    /**
+     * Lazy removes file from index. Real remove will be performed within search method calls or if method
+     * forceRemoves called
+     *
+     * @param filePath file to remove from index
+     */
     @Override
     public void removeFile(String filePath) {
         if(containsFile(filePath)) {
@@ -88,6 +106,9 @@ public class HashFileIndex implements FileIndex {
         }
     }
 
+    /**
+     * Performs all postponed removes
+     */
     @Override
     public void forceRemoves() {
         Iterator<Map.Entry<Token, LinkedList<Long>>> tokenEntryIt = tokenFilesMap.entrySet().iterator();

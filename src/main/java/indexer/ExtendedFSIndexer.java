@@ -1,7 +1,6 @@
 package indexer;
 
 import indexer.fsmonitor.FSMonitorLifecycleHandler;
-import indexer.handler.IndexEventsHandler;
 import indexer.handler.IndexUpdater;
 import indexer.index.FileIndex;
 import indexer.utils.Logger;
@@ -10,7 +9,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by mrx on 05.10.14.
+ * Wrapper for FSIndexer. Implicitly gets IndexUpdater as a parameter for IndexEventsHandler and
+ * therefor can use its methods (that are not in IndexEventsHandler).
  */
 public class ExtendedFSIndexer extends FSIndexer {
 
