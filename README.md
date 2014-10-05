@@ -17,7 +17,17 @@ s [word]             - get list of files containing [word]
 
 c [file_path]        - check if index contains file
 
-p                    - show previous commands results
+p                    - show previous commands results 
+
+m+                   - turn on mime types mode (turned on by default). In this mode when passing a folder path to command 'a' only files with text mime type are added
+
+m-                   - turn off mime types mode. Extensions added with 'e+' command will be used when adding folders
+
+e+ [ext1] [ext2] ... - add extensions. If mime types mode is off only files with listed extensions will be added when passing a folder path to command 'a' (if adding a single file listed extensions are ignored). Note that multiple calls don't cancel previous settings. Example: e+ java txt xml
+
+e- [ext1] [ext2] ... - remove extensions added with command 'e+'
+
+e                    - list extensions used for directories adding
 
 h                    - show this help
 
