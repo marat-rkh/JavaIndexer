@@ -71,48 +71,56 @@ public class ExampleRepl {
             fsIndexer.useExtensions();
             readWriter.println("Mime types mode: off (using extensions)");
         } else if(command[0].equals("e")) {
-            Set<String> exts = fsIndexer.getCurrentExtensions();
-            if(exts.size() != 0) {
-                for (String e : exts) {
-                    readWriter.print(e + " ");
-                }
-                readWriter.println("");
-            } else {
-                readWriter.println("Extensions list is empty");
-            }
+            handleE();
         } else if(command.length >= 2) {
-            Thread execThread = null;
-            if(command[0].equals("e+")) {
-                fsIndexer.addExtensions(splitIntoList(command[1]));
-                readWriter.println("Extensions added");
-            } else if (command[0].equals("e-")) {
-                fsIndexer.removeExtensions(splitIntoList(command[1]));
-                readWriter.println("Extensions removed");
-            } else if(command[0].equals("a")) {
-                execThread = new Thread(new AddCommandRunner(lastCommandId.incrementAndGet(),
-                        command[0], command[1].trim()));
-            } else if(command[0].equals("r")) {
-                execThread = new Thread(new RemoveCommandRunner(lastCommandId.incrementAndGet(),
-                        command[0], command[1].trim()));
-            } else if(command[0].equals("s")) {
-                execThread = new Thread(new SearchCommandRunner(lastCommandId.incrementAndGet(),
-                        command[0], command[1].trim()));
-            } else if(command[0].equals("c")) {
-                execThread = new Thread(new ContainsCommandRunner(lastCommandId.incrementAndGet(),
-                        command[0], command[1].trim()));
-            } else {
-                printUnknownCommandMsg();
-            }
-            if(execThread != null) {
-                execThread.start();
-                execThreads.add(execThread);
-                activeTasksCounter += 1;
-                printCollectedResults();
-            }
+            handleTwoArgCommands(command);
         } else {
             printUnknownCommandMsg();
         }
         return true;
+    }
+
+    private void handleE() throws IOException {
+        Set<String> exts = fsIndexer.getCurrentExtensions();
+        if(exts.size() != 0) {
+            for (String e : exts) {
+                readWriter.print(e + " ");
+            }
+            readWriter.println("");
+        } else {
+            readWriter.println("Extensions list is empty");
+        }
+    }
+
+    private void handleTwoArgCommands(String[] command) throws IOException {
+        Thread execThread = null;
+        if(command[0].equals("e+")) {
+            fsIndexer.addExtensions(splitIntoList(command[1]));
+            readWriter.println("Extensions added");
+        } else if (command[0].equals("e-")) {
+            fsIndexer.removeExtensions(splitIntoList(command[1]));
+            readWriter.println("Extensions removed");
+        } else if(command[0].equals("a")) {
+            execThread = new Thread(new AddCommandRunner(lastCommandId.incrementAndGet(),
+                    command[0], command[1].trim()));
+        } else if(command[0].equals("r")) {
+            execThread = new Thread(new RemoveCommandRunner(lastCommandId.incrementAndGet(),
+                    command[0], command[1].trim()));
+        } else if(command[0].equals("s")) {
+            execThread = new Thread(new SearchCommandRunner(lastCommandId.incrementAndGet(),
+                    command[0], command[1].trim()));
+        } else if(command[0].equals("c")) {
+            execThread = new Thread(new ContainsCommandRunner(lastCommandId.incrementAndGet(),
+                    command[0], command[1].trim()));
+        } else {
+            printUnknownCommandMsg();
+        }
+        if(execThread != null) {
+            execThread.start();
+            execThreads.add(execThread);
+            activeTasksCounter += 1;
+            printCollectedResults();
+        }
     }
 
     private void showHelp() throws IOException {
