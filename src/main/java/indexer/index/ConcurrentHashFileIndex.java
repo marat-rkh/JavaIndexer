@@ -3,6 +3,7 @@ package indexer.index;
 import indexer.exceptions.InconsistentIndexException;
 import indexer.tokenizer.Token;
 import indexer.tokenizer.Tokenizer;
+import indexer.utils.EncodedFile;
 
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -36,20 +37,20 @@ public class ConcurrentHashFileIndex implements FileIndex {
     }
 
     @Override
-    public boolean addFile(String filePath) {
+    public boolean addFile(EncodedFile encodedFile) {
         writeLock.lock();
         try {
-            return index.addFile(filePath);
+            return index.addFile(encodedFile);
         } finally {
             writeLock.unlock();
         }
     }
 
     @Override
-    public void addFiles(List<String> filesPaths) {
+    public void addFiles(List<EncodedFile> files) {
         writeLock.lock();
         try {
-            index.addFiles(filesPaths);
+            index.addFiles(files);
         } finally {
             writeLock.unlock();
         }
@@ -76,10 +77,10 @@ public class ConcurrentHashFileIndex implements FileIndex {
     }
 
     @Override
-    public boolean handleFileModification(String filePath) throws InconsistentIndexException {
+    public boolean handleFileModification(EncodedFile encodedFile) throws InconsistentIndexException {
         writeLock.lock();
         try {
-            return index.handleFileModification(filePath);
+            return index.handleFileModification(encodedFile);
         } finally {
             writeLock.unlock();
         }

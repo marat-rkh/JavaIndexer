@@ -3,10 +3,13 @@ package indexer.index;
 import indexer.exceptions.InconsistentIndexException;
 import indexer.tokenizer.Token;
 import indexer.tokenizer.Tokenizer;
+import indexer.utils.EncodedFile;
 import indexer.utils.FileEntry;
 import indexer.utils.PathUtils;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -57,22 +60,22 @@ public class HashFileIndex implements FileIndex {
      * Adds file to index. File's content is retrieved using tokenizer provided in constructor. If specified file
      * is already in index, it will not be updated.
      *
-     * @param filePath path of file to be added
+     * @param encodedFile file's path and charset containing descriptor
      * @return         {@code true} if file has been added or already presents in index.
      *                 {@code false} is returned if IO problems occurred while reading file from disk
      */
     @Override
-    public boolean addFile(String filePath) {
-        if(new File(filePath).canRead()) {
-            if (!containsFile(filePath)) {
-                List<Token> tokens = readTokens(filePath);
+    public boolean addFile(EncodedFile encodedFile) {
+        if(new File(encodedFile.getFilePath()).canRead()) {
+            if (!containsFile(encodedFile.getFilePath())) {
+                List<Token> tokens = readTokens(encodedFile);
                 if (tokens == null) {
                     return false;
                 }
                 lastAddedFileId.incrementAndGet();
                 int putTokens = putTokensToMap(tokens);
-                idFileMap.put(lastAddedFileId.get(), new FileEntry(filePath, putTokens));
-                fileIdMap.put(filePath, lastAddedFileId.get());
+                idFileMap.put(lastAddedFileId.get(), new FileEntry(encodedFile.getFilePath(), putTokens));
+                fileIdMap.put(encodedFile.getFilePath(), lastAddedFileId.get());
             }
             return true;
         }
@@ -82,12 +85,12 @@ public class HashFileIndex implements FileIndex {
     /**
      * Adds multiple files in index
      *
-     * @param filesPaths list of files to add
+     * @param files file's path and charset containing descriptors
      */
     @Override
-    public void addFiles(List<String> filesPaths) {
-        for(String filePath : filesPaths) {
-            addFile(filePath);
+    public void addFiles(List<EncodedFile> files) {
+        for(EncodedFile file : files) {
+            addFile(file);
         }
     }
 
@@ -124,17 +127,17 @@ public class HashFileIndex implements FileIndex {
     /**
      * Updates file in index by marking old version as 'removed' and adding new version from disk.
      *
-     * @param filePath path of file to be updated
+     * @param encodedFile file's path and charset containing descriptor
      * @return         {@code true} if file has been updated or no such file in index.
      *                 {@code false} is returned if file can not be read from disk
      * @throws InconsistentIndexException if file has been removed and than IO errors occurred while adding it again
      */
     @Override
-    public boolean handleFileModification(String filePath) throws InconsistentIndexException {
-        if(new File(filePath).canRead()) {
-            if(containsFile(filePath)) {
-                removeFile(filePath);
-                if(!addFile(filePath)) {
+    public boolean handleFileModification(EncodedFile encodedFile) throws InconsistentIndexException {
+        if(new File(encodedFile.getFilePath()).canRead()) {
+            if(containsFile(encodedFile.getFilePath())) {
+                removeFile(encodedFile.getFilePath());
+                if(!addFile(encodedFile)) {
                     throw new InconsistentIndexException("IO error has made index inconsistent");
                 }
             }
@@ -197,9 +200,10 @@ public class HashFileIndex implements FileIndex {
         return paths;
     }
 
-    private List<Token> readTokens(String filePath) {
+    private List<Token> readTokens(EncodedFile encodedFile) {
         List<Token> tokens;
-        try (Reader reader = new BufferedReader(new FileReader(filePath))) {
+        try (Reader reader = new BufferedReader(new InputStreamReader(
+                             new FileInputStream(encodedFile.getFilePath()), encodedFile.getCharset()))) {
             tokens = tokenizer.tokenize(reader);
         } catch (IOException e) {
             return null;

@@ -5,7 +5,10 @@ import indexer.exceptions.InconsistentIndexException;
 import indexer.tokenizer.Tokenizer;
 import indexer.tokenizer.Word;
 import indexer.tokenizer.WordsTokenizer;
+import indexer.utils.EncodedFile;
 import org.junit.Test;
+
+import java.nio.charset.Charset;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -17,7 +20,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     @Test
     public void testAddAndSearchSimple() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
-        hashFileIndex.addFile(file1.getAbsolutePath());
+        hashFileIndex.addFile(new EncodedFile(file1.getAbsolutePath()));
 
         assertTrue(hashFileIndex.search(new Word("file1")).size() == 1);
         assertTrue(hashFileIndex.search(new Word("content")).size() == 1);
@@ -27,11 +30,11 @@ public class HashFileIndexTest extends TmpFsCreator {
     @Test
     public void testAddAndSearch() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
-        hashFileIndex.addFile(file1.getAbsolutePath());
-        hashFileIndex.addFile(file2.getAbsolutePath());
-        hashFileIndex.addFile(file3.getAbsolutePath());
-        hashFileIndex.addFile(dir1SubFile1.getAbsolutePath());
-        hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
+        hashFileIndex.addFile(new EncodedFile(file1.getAbsolutePath()));
+        hashFileIndex.addFile(new EncodedFile(file2.getAbsolutePath()));
+        hashFileIndex.addFile(new EncodedFile(file3.getAbsolutePath()));
+        hashFileIndex.addFile(new EncodedFile(dir1SubFile1.getAbsolutePath()));
+        hashFileIndex.addFile(new EncodedFile(dir2SubFile1.getAbsolutePath()));
 
         assertTrue(hashFileIndex.search(new Word("file1")).size() == 1);
         assertTrue(hashFileIndex.search(new Word("file2")).size() == 1);
@@ -51,7 +54,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     @Test
     public void testContainsFile() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
-        hashFileIndex.addFile(file1.getAbsolutePath());
+        hashFileIndex.addFile(new EncodedFile(file1.getAbsolutePath()));
 
         assertTrue(hashFileIndex.containsFile(file1.getAbsolutePath()));
         assertTrue(!hashFileIndex.containsFile(file2.getAbsolutePath()));
@@ -60,7 +63,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     @Test
     public void testRemoveFileReadingDisk() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
-        hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
+        hashFileIndex.addFile(new EncodedFile(dir2SubFile1.getAbsolutePath()));
 
         assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
         assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
@@ -71,27 +74,10 @@ public class HashFileIndexTest extends TmpFsCreator {
         assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 0);
     }
 
-//    @Test
-//    public void testRemoveFileIteratingAll() {
-//        FileIndex hashFileIndex = new HashFileIndex(tokenizer);
-//        hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
-//
-//        assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
-//        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
-//
-//        if(!dir2SubFile1.delete()) {
-//            fail("Manual deleting problem occurred");
-//        }
-//        hashFileIndex.removeFileIteratingAll(dir2SubFile1.getAbsolutePath());
-//
-//        assertTrue(!hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
-//        assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 0);
-//    }
-
     @Test
     public void testHandleFileModificationAppend() throws InconsistentIndexException {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
-        hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
+        hashFileIndex.addFile(new EncodedFile(dir2SubFile1.getAbsolutePath()));
 
         assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
         assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
@@ -99,7 +85,7 @@ public class HashFileIndexTest extends TmpFsCreator {
         if(!appendTextToFile(dir2SubFile1, " appendix")) {
             fail("append text failed");
         }
-        hashFileIndex.handleFileModification(dir2SubFile1.getAbsolutePath());
+        hashFileIndex.handleFileModification(new EncodedFile(dir2SubFile1.getAbsolutePath()));
 
         assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
         assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
@@ -109,7 +95,7 @@ public class HashFileIndexTest extends TmpFsCreator {
     @Test
     public void testHandleFileModificationReplace() throws InconsistentIndexException {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
-        hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
+        hashFileIndex.addFile(new EncodedFile(dir2SubFile1.getAbsolutePath()));
 
         assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
         assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 1);
@@ -117,7 +103,7 @@ public class HashFileIndexTest extends TmpFsCreator {
         if(!rewriteFileWithText(dir2SubFile1, "replacement")) {
             fail("rewrite text failed");
         }
-        hashFileIndex.handleFileModification(dir2SubFile1.getAbsolutePath());
+        hashFileIndex.handleFileModification(new EncodedFile(dir2SubFile1.getAbsolutePath()));
 
         assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
         assertTrue(hashFileIndex.search(new Word("Lorem")).size() == 0);
@@ -128,11 +114,11 @@ public class HashFileIndexTest extends TmpFsCreator {
     @Test
     public void testRemoveDirectory() {
         FileIndex hashFileIndex = new HashFileIndex(tokenizer);
-        hashFileIndex.addFile(file1.getAbsolutePath());
-        hashFileIndex.addFile(file2.getAbsolutePath());
-        hashFileIndex.addFile(file3.getAbsolutePath());
-        hashFileIndex.addFile(dir1SubFile1.getAbsolutePath());
-        hashFileIndex.addFile(dir2SubFile1.getAbsolutePath());
+        hashFileIndex.addFile(new EncodedFile(file1.getAbsolutePath()));
+        hashFileIndex.addFile(new EncodedFile(file2.getAbsolutePath()));
+        hashFileIndex.addFile(new EncodedFile(file3.getAbsolutePath()));
+        hashFileIndex.addFile(new EncodedFile(dir1SubFile1.getAbsolutePath()));
+        hashFileIndex.addFile(new EncodedFile(dir2SubFile1.getAbsolutePath()));
         hashFileIndex.removeDirectory(dir1.getAbsolutePath());
 
         assertTrue(hashFileIndex.containsFile(file1.getAbsolutePath()));

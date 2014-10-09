@@ -5,7 +5,9 @@ import indexer.encoding.EncodingDetector;
 import indexer.exceptions.InconsistentIndexException;
 import indexer.exceptions.NotHandledEventException;
 import indexer.index.FileIndex;
+import indexer.utils.EncodedFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -35,7 +37,7 @@ public class IndexUpdater implements IndexEventsHandler {
 
     @Override
     public void onFilesAddedEvent(Path filePath) throws NotHandledEventException {
-        final List<String> cache = new LinkedList<>();
+        final List<EncodedFile> cache = new LinkedList<>();
         final ExecutorService addersPool = Executors.newFixedThreadPool(1);
 //        if(filePath.toFile().isFile()) {
 //            cache.add(filePath.toFile().getAbsolutePath());
@@ -62,9 +64,18 @@ public class IndexUpdater implements IndexEventsHandler {
     @Override
     public void onFilesModifiedEvent(Path filePath) throws NotHandledEventException {
         try {
-            fileIndex.handleFileModification(filePath.toFile().getAbsolutePath());
+            File file = filePath.toFile();
+            DetectionResult result = EncodingDetector.standardDetector().detect(file.getAbsolutePath());
+            if(result != null) {
+                EncodedFile encodedFile = new EncodedFile(file.getAbsolutePath(), result.getCharset());
+                fileIndex.handleFileModification(encodedFile);
+            } else {
+                fileIndex.removeFile(file.getAbsolutePath());
+            }
         } catch (InconsistentIndexException e) {
             throw new NotHandledEventException("index has become inconsistent while modification");
+        } catch (IOException e) {
+            throw new NotHandledEventException("modification event hasn't been handled due to IO errors");
         }
     }
 
@@ -78,11 +89,11 @@ public class IndexUpdater implements IndexEventsHandler {
     }
 
     private class AdderFileVisitor extends SimpleFileVisitor<Path> {
-        private final ExecutorService addersPool;
-        private final List<String> cache;
         private final EncodingDetector detector = EncodingDetector.standardDetector();
+        private final ExecutorService addersPool;
+        private final List<EncodedFile> cache;
 
-        private AdderFileVisitor(ExecutorService addersPool, List<String> cache) {
+        private AdderFileVisitor(ExecutorService addersPool, List<EncodedFile> cache) {
             this.addersPool = addersPool;
             this.cache = cache;
         }
@@ -92,7 +103,8 @@ public class IndexUpdater implements IndexEventsHandler {
             DetectionResult result = detector.detect(file.toFile().getAbsolutePath());
             if (result != null) {
                 // todo: use detected charset to read!
-                cache.add(file.toFile().getAbsolutePath());
+                EncodedFile encodedFile = new EncodedFile(file.toFile().getAbsolutePath(), result.getCharset());
+                cache.add(encodedFile);
                 if (cache.size() > ADD_FILE_CACHE_SIZE) {
                     addersPool.execute(new Adder(new LinkedList<>(cache)));
                     cache.clear();
@@ -103,9 +115,9 @@ public class IndexUpdater implements IndexEventsHandler {
     }
 
     private class Adder implements Runnable {
-        private List<String> filesList;
+        private List<EncodedFile> filesList;
 
-        public Adder(List<String> filesList) {
+        public Adder(List<EncodedFile> filesList) {
             this.filesList = filesList;
         }
 
