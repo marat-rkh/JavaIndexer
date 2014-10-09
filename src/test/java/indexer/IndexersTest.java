@@ -37,7 +37,7 @@ public class IndexersTest extends TmpFsCreator {
         Runnable containsQuery3 = createContainsRunnable(fsIndexer, containsCounter, dir1SubFile1.getAbsolutePath());
         runTestThreads(Arrays.asList(containsQuery1, searchQuery1, containsQuery2, searchQuery2, containsQuery3));
         assertEquals(2, searchCounter.get());
-        assertEquals(3, containsCounter.get());
+        assertEquals(2, containsCounter.get());
         fsIndexer.close();
     }
 
@@ -109,14 +109,14 @@ public class IndexersTest extends TmpFsCreator {
         assertTrue(fsIndexer.containsFile(dir2SubFile1.getAbsolutePath()));
         assertEquals(1, fsIndexer.search(new Word("dolor")).size());
         fsIndexer.add(dir1SubFile1.getAbsolutePath());
-        assertTrue(fsIndexer.containsFile(dir1SubFile1.getAbsolutePath()));
+        assertFalse(fsIndexer.containsFile(dir1SubFile1.getAbsolutePath()));
         assertTrue(fsIndexer.containsFile(dir2SubFile1.getAbsolutePath()));
         assertEquals(1, fsIndexer.search(new Word("dolor")).size());
         fsIndexer.add(tempFolder.getRoot().getAbsolutePath());
         assertTrue(fsIndexer.containsFile(file1.getAbsolutePath()));
         assertTrue(fsIndexer.containsFile(file2.getAbsolutePath()));
         assertTrue(fsIndexer.containsFile(file3.getAbsolutePath()));
-        assertTrue(fsIndexer.containsFile(dir1SubFile1.getAbsolutePath()));
+        assertFalse(fsIndexer.containsFile(dir1SubFile1.getAbsolutePath()));
         assertTrue(fsIndexer.containsFile(dir2SubFile1.getAbsolutePath()));
         fsIndexer.remove(dir1.getAbsolutePath());
         assertFalse(fsIndexer.containsFile(dir1SubFile1.getAbsolutePath()));

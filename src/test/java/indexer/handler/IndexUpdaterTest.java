@@ -21,19 +21,19 @@ public class IndexUpdaterTest extends TmpFsCreator {
         IndexEventsHandler handler = new IndexUpdater(hashFileIndex);
 
         handler.onFilesAddedEvent(Paths.get(dir1SubFile1.getAbsolutePath()));
-        assertTrue(hashFileIndex.containsFile(dir1SubFile1.getAbsolutePath()));
+        assertFalse("dir1SubFile1 not added", hashFileIndex.containsFile(dir1SubFile1.getAbsolutePath()));
 
         handler.onFilesAddedEvent(Paths.get(file1.getAbsolutePath()));
-        assertTrue(hashFileIndex.containsFile(file1.getAbsolutePath()));
-        assertEquals(1, hashFileIndex.search(new Word("file1")).size());
+        assertTrue("file1 not added", hashFileIndex.containsFile(file1.getAbsolutePath()));
+        assertEquals("no word 'file1' in file1", 1, hashFileIndex.search(new Word("file1")).size());
 
         handler.onFilesAddedEvent(Paths.get(file1.getAbsolutePath()));
-        assertTrue(hashFileIndex.containsFile(file1.getAbsolutePath()));
-        assertEquals(1, hashFileIndex.search(new Word("file1")).size());
+        assertTrue("file1 repeating add failed", hashFileIndex.containsFile(file1.getAbsolutePath()));
+        assertEquals("file1 repeated search failed", 1, hashFileIndex.search(new Word("file1")).size());
 
         handler.onFilesAddedEvent(Paths.get(dir2SubFile1.getAbsolutePath()));
-        assertEquals(1, hashFileIndex.search(new Word("file1")).size());
-        assertEquals(1, hashFileIndex.search(new Word("amet,")).size());
+        assertEquals("dir2SubFile1 add - search 'file1' failed", 1, hashFileIndex.search(new Word("file1")).size());
+        assertEquals("dir2SubFile1 add - search 'amet' failed", 1, hashFileIndex.search(new Word("amet,")).size());
     }
 
     @Test
@@ -42,7 +42,7 @@ public class IndexUpdaterTest extends TmpFsCreator {
         IndexEventsHandler handler = new IndexUpdater(hashFileIndex);
 
         handler.onFilesAddedEvent(Paths.get(dir1.getAbsolutePath()));
-        assertTrue(hashFileIndex.containsFile(dir1SubFile1.getAbsolutePath()));
+        assertFalse(hashFileIndex.containsFile(dir1SubFile1.getAbsolutePath()));
 
         handler.onFilesAddedEvent(Paths.get(dir2.getAbsolutePath()));
         assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
@@ -52,7 +52,7 @@ public class IndexUpdaterTest extends TmpFsCreator {
         assertTrue(hashFileIndex.containsFile(file1.getAbsolutePath()));
         assertTrue(hashFileIndex.containsFile(file2.getAbsolutePath()));
         assertTrue(hashFileIndex.containsFile(file3.getAbsolutePath()));
-        assertTrue(hashFileIndex.containsFile(dir1SubFile1.getAbsolutePath()));
+        assertFalse(hashFileIndex.containsFile(dir1SubFile1.getAbsolutePath()));
         assertTrue(hashFileIndex.containsFile(dir2SubFile1.getAbsolutePath()));
         assertEquals(3, hashFileIndex.search(new Word("content")).size());
         assertEquals(1, hashFileIndex.search(new Word("file1")).size());

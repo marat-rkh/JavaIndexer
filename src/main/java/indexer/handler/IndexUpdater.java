@@ -1,5 +1,7 @@
 package indexer.handler;
 
+import indexer.encoding.DetectionResult;
+import indexer.encoding.EncodingDetector;
 import indexer.exceptions.InconsistentIndexException;
 import indexer.exceptions.NotHandledEventException;
 import indexer.index.FileIndex;
@@ -27,9 +29,6 @@ public class IndexUpdater implements IndexEventsHandler {
     private final FileIndex fileIndex;
     private final int ADD_FILE_CACHE_SIZE = 1000;
 
-    private boolean useMimeTypes = true;
-    private final Set<String> extensions = new HashSet<>();
-
     public IndexUpdater(FileIndex fileIndex) {
         this.fileIndex = fileIndex;
     }
@@ -38,15 +37,15 @@ public class IndexUpdater implements IndexEventsHandler {
     public void onFilesAddedEvent(Path filePath) throws NotHandledEventException {
         final List<String> cache = new LinkedList<>();
         final ExecutorService addersPool = Executors.newFixedThreadPool(1);
-        if(filePath.toFile().isFile()) {
-            cache.add(filePath.toFile().getAbsolutePath());
-        } else {
+//        if(filePath.toFile().isFile()) {
+//            cache.add(filePath.toFile().getAbsolutePath());
+//        } else {
             try {
                 Files.walkFileTree(filePath, new AdderFileVisitor(addersPool, cache));
             } catch (IOException e) {
                 throw new NotHandledEventException("files adding failed due to IO error, details: " + e.getMessage());
             }
-        }
+//        }
         fileIndex.addFiles(cache);
         waitAddersToFinish(addersPool);
     }
@@ -69,32 +68,6 @@ public class IndexUpdater implements IndexEventsHandler {
         }
     }
 
-    public void useMimeTypes() {
-        useMimeTypes = true;
-    }
-
-    public void useExtensions() {
-        useMimeTypes = false;
-    }
-
-    public void addExtensions(List<String> exts) {
-        for(String e : exts) {
-            if(!e.equals("")) {
-                extensions.add(e);
-            }
-        }
-    }
-
-    public void removeExtensions(List<String> exts) {
-        for(String e : exts) {
-            extensions.remove(e);
-        }
-    }
-
-    public Set<String> getCurrentExtensions() {
-        return extensions;
-    }
-
     private void waitAddersToFinish(ExecutorService addersPool) {
         addersPool.shutdown();
         try {
@@ -105,9 +78,9 @@ public class IndexUpdater implements IndexEventsHandler {
     }
 
     private class AdderFileVisitor extends SimpleFileVisitor<Path> {
-        private final String TEXT_MIME_PREFIX = "text/";
         private final ExecutorService addersPool;
         private final List<String> cache;
+        private final EncodingDetector detector = EncodingDetector.standardDetector();
 
         private AdderFileVisitor(ExecutorService addersPool, List<String> cache) {
             this.addersPool = addersPool;
@@ -116,8 +89,9 @@ public class IndexUpdater implements IndexEventsHandler {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            String ext = getExtension(file);
-            if(useMimeTypes && mimeIsText(file) || ext != null && extensions.contains(ext)) {
+            DetectionResult result = detector.detect(file.toFile().getAbsolutePath());
+            if (result != null) {
+                // todo: use detected charset to read!
                 cache.add(file.toFile().getAbsolutePath());
                 if (cache.size() > ADD_FILE_CACHE_SIZE) {
                     addersPool.execute(new Adder(new LinkedList<>(cache)));
@@ -125,20 +99,6 @@ public class IndexUpdater implements IndexEventsHandler {
                 }
             }
             return FileVisitResult.CONTINUE;
-        }
-
-        private boolean mimeIsText(Path file) throws IOException {
-            String mimeType = Files.probeContentType(file);
-            return mimeType != null && mimeType.startsWith(TEXT_MIME_PREFIX);
-        }
-
-        private String getExtension(Path file) {
-            String filePath = file.toFile().getAbsolutePath().toLowerCase();
-            int dotIndex = filePath.lastIndexOf(".");
-            if(dotIndex != -1 && dotIndex != 0) {
-                return filePath.substring(dotIndex + 1);
-            }
-            return null;
         }
     }
 

@@ -19,27 +19,11 @@ c [file_path]        - check if index contains file
 
 p                    - show previous commands results 
 
-m+                   - turn on mime types mode (turned on by default). In this mode when passing a folder path to command 'a' only files with text mime type are added
-
-m-                   - turn off mime types mode. Extensions added with 'e+' command will be used when adding folders
-
-e+ [ext1] [ext2] ... - add extensions. If mime types mode is off only files with listed extensions will be added when passing a folder path to command 'a' (if adding a single file listed extensions are ignored). Note that multiple calls don't cancel previous settings. Example: e+ java txt xml
-
-e- [ext1] [ext2] ... - remove extensions added with command 'e+'
-
-e                    - list extensions used for directories adding
-
 h                    - show this help
 
 q                    - finish work
 
 Все команды выполняются в отдельных потоках и их результаты накапливаются в очередь. Когда repl принимает очередную команду, она вывод список результатов предыдущих комманд. Так же, для того, чтобы посмотреть накопленные результаты, есть отдельная команда 'p'
-
-Для пользователей Mac Os
-========================
-
-В Mac Os не работает режим фильтрации файлов по mime type (баг jdk7). Поэтому вам доступен только режим фильтрации с использованием расширений файлов.
-
 
 Как написать свой индексатор, используя библиотеку
 ==================================================

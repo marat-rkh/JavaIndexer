@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ExampleRepl {
     private final List<Thread> execThreads = new LinkedList<>();
     private final Queue<String> resultsQueue = new ConcurrentLinkedQueue<>();
-    private final ExtendedFSIndexer fsIndexer;
+    private final FSIndexer fsIndexer;
 
     private final AtomicInteger lastCommandId = new AtomicInteger(0);
     private int activeTasksCounter = 0;
@@ -28,7 +28,7 @@ public class ExampleRepl {
     
     private ReadWriter readWriter = null;
 
-    public ExampleRepl(ExtendedFSIndexer fsIndexer, ReadWriter readWriter) throws Exception {
+    public ExampleRepl(FSIndexer fsIndexer, ReadWriter readWriter) throws Exception {
         this.fsIndexer = fsIndexer;
         this.readWriter = readWriter;
     }
@@ -64,14 +64,6 @@ public class ExampleRepl {
             showHelp();
         } else if(command[0].equals("q")) {
             return false;
-        } else if(command[0].equals("m+")) {
-            fsIndexer.useMimeTypes();
-            readWriter.println("Mime types mode: on");
-        } else if(command[0].equals("m-")) {
-            fsIndexer.useExtensions();
-            readWriter.println("Mime types mode: off (using extensions)");
-        } else if(command[0].equals("e")) {
-            handleE();
         } else if(command.length >= 2) {
             handleTwoArgCommands(command);
         } else {
@@ -80,27 +72,9 @@ public class ExampleRepl {
         return true;
     }
 
-    private void handleE() throws IOException {
-        Set<String> exts = fsIndexer.getCurrentExtensions();
-        if(exts.size() != 0) {
-            for (String e : exts) {
-                readWriter.print(e + " ");
-            }
-            readWriter.println("");
-        } else {
-            readWriter.println("Extensions list is empty");
-        }
-    }
-
     private void handleTwoArgCommands(String[] command) throws IOException {
         Thread execThread = null;
-        if(command[0].equals("e+")) {
-            fsIndexer.addExtensions(splitIntoList(command[1]));
-            readWriter.println("Extensions added");
-        } else if (command[0].equals("e-")) {
-            fsIndexer.removeExtensions(splitIntoList(command[1]));
-            readWriter.println("Extensions removed");
-        } else if(command[0].equals("a")) {
+        if(command[0].equals("a")) {
             execThread = new Thread(new AddCommandRunner(lastCommandId.incrementAndGet(),
                     command[0], command[1].trim()));
         } else if(command[0].equals("r")) {
@@ -125,23 +99,12 @@ public class ExampleRepl {
 
     private void showHelp() throws IOException {
         final String help = "Commands:\n" +
-                "a <file_or_dir_path> - add file or dir to index\n\n" +
-                "r <file_or_dir_path> - remove file or dir from index\n\n" +
-                "s <word>             - get list of files containing <word>\n\n" +
-                "c <file_path>        - check if index contains file\n\n" +
-                "p                    - show previous commands results\n\n" +
-                "m+                   - turn on mime types mode (turned on by default)\n" +
-                "In this mode when passing a folder path to command 'a' only files with text mime type are added\n\n" +
-                "m-                   - turn off mime types mode\n" +
-                "Extensions added with 'e+' command will be used when adding folders\n\n" +
-                "e+ <ext1> <ext2> ... - add extensions\n" +
-                "If mime types mode is off only files with listed extensions will be added when passing a folder path\n" +
-                "to command 'a' (if adding a single file listed extensions are ignored)\n" +
-                "Note that multiple calls don't cancel previous settings\n" +
-                "Example: e+ java txt xml\n\n" +
-                "e- <ext1> <ext2> ... - remove extensions added with command 'e+'\n\n" +
-                "e                    - list extensions used for directories adding\n\n" +
-                "h                    - show this help\n\n" +
+                "a <file_or_dir_path> - add file or dir to index\n" +
+                "r <file_or_dir_path> - remove file or dir from index\n" +
+                "s <word>             - get list of files containing <word>\n" +
+                "c <file_path>        - check if index contains file\n" +
+                "p                    - show previous commands results\n" +
+                "h                    - show this help\n" +
                 "q                    - finish work";
         readWriter.println(help);
     }
@@ -194,15 +157,6 @@ public class ExampleRepl {
             } catch (InterruptedException e) {
             } catch (Exception e) {}
         }
-    }
-
-    private List<String> splitIntoList(String str) {
-        String[] arr = str.split(" ");
-        List<String> list = new ArrayList<>();
-        for(String a : arr) {
-            list.add(a.trim());
-        }
-        return list;
     }
 
     private abstract class AsyncCommandRunner implements Runnable {
