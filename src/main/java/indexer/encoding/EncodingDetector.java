@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -18,7 +17,6 @@ import java.util.List;
 // todo: remove assertions
 public class EncodingDetector {
     private final List<Automaton> automata;
-    private List<Automaton> workingCopy;
 
     private final ByteBuffer bytes;
 
@@ -35,7 +33,6 @@ public class EncodingDetector {
             return null;
         }
         prepareAutomata(fileSize);
-        workingCopy = new LinkedList<>(automata);
         ReadableByteChannel inChannel = null;
         try {
             inChannel = new FileInputStream(filePath).getChannel();
@@ -58,39 +55,46 @@ public class EncodingDetector {
 
     private boolean doAutomataIteration(boolean isEnd) {
         feedAutomata(isEnd);
-        if (workingCopy.size() == 0) {
-            return false;
-        }
         bytes.clear();
         return true;
     }
 
     private void feedAutomata(boolean isEnd) {
-        Iterator<Automaton> it = workingCopy.iterator();
+//        Iterator<Automaton> it = automata.iterator();
+//        bytes.flip();
+//        while (it.hasNext()) {
+//            Automaton automaton = it.next();
+//            automaton.feed(bytes, isEnd);
+//            bytes.rewind();
+//        }
+//
         bytes.flip();
-        while (it.hasNext()) {
-            Automaton automaton = it.next();
-            automaton.feed(bytes, isEnd);
-            if(automaton.getState().equals(Automaton.State.ERROR)) {
-                it.remove();
-            }
+        for(Automaton a : automata) {
+            a.feed(bytes, isEnd);
             bytes.rewind();
         }
     }
 
     private Automaton bestFitAutomaton() {
-        if(automata.size() != 0) {
-            Iterator<Automaton> it = workingCopy.iterator();
-            Automaton best = it.next();
-            while (it.hasNext()) {
-                Automaton current = it.next();
-                if(current.getConfidence() > best.getConfidence()) {
-                    best = current;
-                }
+//            Iterator<Automaton> it = automata.iterator();
+//            Automaton best = null;
+//            while (it.hasNext()) {
+//                Automaton current = it.next();
+//                double bestConfidence = best == null ? -1 : best.getConfidence();
+//                if(!current.getState().equals(Automaton.State.ERROR) && current.getConfidence() > bestConfidence) {
+//                    best = current;
+//                }
+//            }
+//            return best;
+
+        Automaton best = null;
+        for(Automaton current : automata) {
+            double bestConfidence = best == null ? -1 : best.getConfidence();
+            if(!current.getState().equals(Automaton.State.ERROR) && current.getConfidence() > bestConfidence) {
+                best = current;
             }
-            return best;
         }
-        return null;
+        return best;
     }
 
     private void prepareAutomata(long fileSize) {

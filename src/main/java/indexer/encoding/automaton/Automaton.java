@@ -24,7 +24,7 @@ public class Automaton {
 
     public void feed(ByteBuffer bytes, boolean isEnd) {
         if(!state.equals(State.ERROR)) {
-            char[] decodedChars = validator.feed(bytes, isEnd);
+            CharArrayWrapper decodedChars = validator.feed(bytes, isEnd);
             if(validator.getState().equals(Validator.State.ERROR)) {
                 state = State.ERROR;
                 return;

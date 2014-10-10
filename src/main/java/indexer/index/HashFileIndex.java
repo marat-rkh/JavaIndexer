@@ -8,10 +8,10 @@ import indexer.utils.FileEntry;
 import indexer.utils.PathUtils;
 
 import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -20,11 +20,12 @@ import java.util.concurrent.atomic.AtomicLong;
  * @see indexer.index.FileIndex
  */
 public class HashFileIndex implements FileIndex {
-    private final Map<Token, LinkedList<Long>> tokenFilesMap = new HashMap<>();
+    private final Map<Token, ArrayList<Long>> tokenFilesMap = new ConcurrentHashMap<>();
     private final Map<Long, FileEntry> idFileMap = new HashMap<>();
     private final Map<String, Long> fileIdMap = new HashMap<>();
 
     private final AtomicLong lastAddedFileId = new AtomicLong(-1);
+    private long version = 0;
 
     private final Tokenizer tokenizer;
 
@@ -42,7 +43,7 @@ public class HashFileIndex implements FileIndex {
     @Override
     public List<String> search(Token tokenToFind) {
         if(tokenToFind != null) {
-            LinkedList<Long> filesForToken = tokenFilesMap.get(tokenToFind);
+            ArrayList<Long> filesForToken = tokenFilesMap.get(tokenToFind);
             if (filesForToken != null) {
                 doPostponedRemoves(filesForToken);
                 if(filesForToken.size() == 0) {
@@ -114,9 +115,9 @@ public class HashFileIndex implements FileIndex {
      */
     @Override
     public void forceRemoves() {
-        Iterator<Map.Entry<Token, LinkedList<Long>>> tokenEntryIt = tokenFilesMap.entrySet().iterator();
+        Iterator<Map.Entry<Token, ArrayList<Long>>> tokenEntryIt = tokenFilesMap.entrySet().iterator();
         while (tokenEntryIt.hasNext()) {
-            Map.Entry<Token, LinkedList<Long>> tokenEntry = tokenEntryIt.next();
+            Map.Entry<Token, ArrayList<Long>> tokenEntry = tokenEntryIt.next();
             doPostponedRemoves(tokenEntry.getValue());
             if(tokenEntry.getValue().size() == 0) {
                 tokenEntryIt.remove();
@@ -172,7 +173,33 @@ public class HashFileIndex implements FileIndex {
         }
     }
 
-    private void doPostponedRemoves(LinkedList<Long> tokenFiles) {
+//    public class IndexIterator implements Iterator<String> {
+//        private final List<Long> ids;
+//        private int pos = 0;
+//
+//        private IndexIterator(List<Long> fileIds) {
+//            this.ids = fileIds;
+//            this.files = idFileMap;
+//            this.onCreateVersion = onCreateVersion;
+//        }
+//
+//        public String next() {
+//            if(version != onCreateVersion) {
+//                isInvalid = true;
+//                return null;
+//            }
+//            if(pos == ids.size()) {
+//                return null;
+//            }
+//            int
+//        }
+//
+//        public boolean isInvalid() {
+//            return isInvalid;
+//        }
+//    }
+
+    private void doPostponedRemoves(ArrayList<Long> tokenFiles) {
         Iterator<Long> filesIdIt = tokenFiles.iterator();
         while (filesIdIt.hasNext()) {
             Long fileId = filesIdIt.next();
@@ -186,14 +213,15 @@ public class HashFileIndex implements FileIndex {
     private void doPostponedRemove(Iterator<Long> filesIdIt, Long fileId, FileEntry fileEntry) {
         filesIdIt.remove();
         fileEntry.decreaseTokensCounter();
-        if(fileEntry.getTokensCounter() == 0) {
+        if(fileEntry.getTokensCounter() <= 0) {
             fileIdMap.remove(fileEntry.getFilePath());
             idFileMap.remove(fileId);
         }
+        ++version;
     }
 
-    private List<String> getPaths(LinkedList<Long> filesForToken) {
-        List<String> paths = new ArrayList<>();
+    private List<String> getPaths(ArrayList<Long> filesForToken) {
+        List<String> paths = new ArrayList<>(filesForToken.size());
         for(Long id : filesForToken) {
             paths.add(idFileMap.get(id).getFilePath());
         }
@@ -222,13 +250,13 @@ public class HashFileIndex implements FileIndex {
     }
 
     private boolean putInMap(Token token, long newId) {
-        LinkedList<Long> filesId = tokenFilesMap.get(token);
+        ArrayList<Long> filesId = tokenFilesMap.get(token);
         if(filesId == null) {
-            filesId = new LinkedList<>();
+            filesId = new ArrayList<>();
             filesId.add(newId);
             tokenFilesMap.put(token, filesId);
             return true;
-        } else if(filesId.getLast() != newId) {
+        } else if(filesId.get(filesId.size() - 1) != newId) {
             filesId.add(newId);
             return true;
         }

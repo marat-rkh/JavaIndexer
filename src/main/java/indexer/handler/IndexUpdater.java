@@ -92,6 +92,7 @@ public class IndexUpdater implements IndexEventsHandler {
         private final EncodingDetector detector = EncodingDetector.standardDetector();
         private final ExecutorService addersPool;
         private final List<EncodedFile> cache;
+        private int counter = 0;
 
         private AdderFileVisitor(ExecutorService addersPool, List<EncodedFile> cache) {
             this.addersPool = addersPool;
@@ -102,9 +103,9 @@ public class IndexUpdater implements IndexEventsHandler {
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             DetectionResult result = detector.detect(file.toFile().getAbsolutePath());
             if (result != null) {
-                // todo: use detected charset to read!
                 EncodedFile encodedFile = new EncodedFile(file.toFile().getAbsolutePath(), result.getCharset());
                 cache.add(encodedFile);
+                System.out.println(counter++);
                 if (cache.size() > ADD_FILE_CACHE_SIZE) {
                     addersPool.execute(new Adder(new LinkedList<>(cache)));
                     cache.clear();

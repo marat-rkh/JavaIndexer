@@ -11,25 +11,25 @@ public class ControlsCounter {
     private int allChars = 0;
     private int controlsNum = 0;
 
-    public void feed(char[] chars) {
-        assert(chars.length != 0);
+    public void feed(CharArrayWrapper chars) {
+        assert(chars.getLen() != 0);
         int i = 0;
         if(hasPrev) {
             i = 1;
-            count(codePointForPair(prev, chars[0]));
+            count(codePointForPair(prev, chars.get(0)));
             hasPrev = false;
         }
-        for(; i < chars.length; i++) {
-            if(!Character.isHighSurrogate(chars[i])) {
-                convertingBuffer[0] = chars[i];
+        for(; i < chars.getLen(); i++) {
+            if(!Character.isHighSurrogate(chars.get(i))) {
+                convertingBuffer[0] = chars.get(i);
                 count(Character.codePointAt(convertingBuffer, 0));
             } else {
-                if(i != chars.length - 1) {
-                    count(codePointForPair(chars[i], chars[i + 1]));
+                if(i != chars.getLen() - 1) {
+                    count(codePointForPair(chars.get(i), chars.get(i + 1)));
                     i += 1;
                 } else {
                     hasPrev = true;
-                    prev = chars[i];
+                    prev = chars.get(i);
                 }
             }
         }

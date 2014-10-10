@@ -14,7 +14,7 @@ public class Validator {
     private final ByteBuffer localBuffer;
     private final byte[] exchangeBuffer;
     private final CharBuffer chars;
-    private final char[] array;
+    private final CharArrayWrapper charsArrayWrapper;
 
     private State state = State.OK;
 
@@ -23,18 +23,18 @@ public class Validator {
         localBuffer = ByteBuffer.allocate(2 * bytesBufferSize);
         exchangeBuffer = new byte[bytesBufferSize];
         chars = CharBuffer.allocate(bytesBufferSize);
-        array = chars.array();
+        charsArrayWrapper = new CharArrayWrapper(chars.array());
     }
 
-    public char[] feed(ByteBuffer bytes, boolean isEnd) {
+    public CharArrayWrapper feed(ByteBuffer bytes, boolean isEnd) {
         if(!state.equals(State.ERROR)) {
             putToLocalBuffer(bytes);
             if(!decode(isEnd)) {
                 return null;
             }
-            char[] decodedChars = getDecodedChars();
+            fillArrayWithDecodedChars();
             localBuffer.compact();
-            return decodedChars;
+            return charsArrayWrapper;
         }
         return null;
     }
@@ -51,14 +51,12 @@ public class Validator {
         return true;
     }
 
-    private char[] getDecodedChars() {
+    private void fillArrayWithDecodedChars() {
         chars.flip();
         int offs = chars.position();
         int len = chars.remaining();
-        char[] decodedChars = new char[len];
-        System.arraycopy(array, offs, decodedChars, 0, len);
+        charsArrayWrapper.setRange(offs, len);
         chars.clear();
-        return decodedChars;
     }
 
     private void putToLocalBuffer(ByteBuffer bytes) {
