@@ -25,7 +25,6 @@ public class HashFileIndex implements FileIndex {
     private final Map<String, Long> fileIdMap = new HashMap<>();
 
     private final AtomicLong lastAddedFileId = new AtomicLong(-1);
-    private long version = 0;
 
     private final Tokenizer tokenizer;
 
@@ -173,32 +172,6 @@ public class HashFileIndex implements FileIndex {
         }
     }
 
-//    public class IndexIterator implements Iterator<String> {
-//        private final List<Long> ids;
-//        private int pos = 0;
-//
-//        private IndexIterator(List<Long> fileIds) {
-//            this.ids = fileIds;
-//            this.files = idFileMap;
-//            this.onCreateVersion = onCreateVersion;
-//        }
-//
-//        public String next() {
-//            if(version != onCreateVersion) {
-//                isInvalid = true;
-//                return null;
-//            }
-//            if(pos == ids.size()) {
-//                return null;
-//            }
-//            int
-//        }
-//
-//        public boolean isInvalid() {
-//            return isInvalid;
-//        }
-//    }
-
     private void doPostponedRemoves(ArrayList<Long> tokenFiles) {
         Iterator<Long> filesIdIt = tokenFiles.iterator();
         while (filesIdIt.hasNext()) {
@@ -217,7 +190,6 @@ public class HashFileIndex implements FileIndex {
             fileIdMap.remove(fileEntry.getFilePath());
             idFileMap.remove(fileId);
         }
-        ++version;
     }
 
     private List<String> getPaths(ArrayList<Long> filesForToken) {

@@ -6,6 +6,7 @@ import indexer.tokenizer.Word;
 import indexer.utils.ReadWriter;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ExampleRepl {
     private final List<Thread> execThreads = new LinkedList<>();
-    private final Queue<String> resultsQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<List<String>> resultsQueue = new ConcurrentLinkedQueue<>();
     private final FSIndexer fsIndexer;
 
     private final AtomicInteger lastCommandId = new AtomicInteger(0);
@@ -137,7 +138,10 @@ public class ExampleRepl {
         if(resultsQueue.size() != 0) {
             readWriter.println("");
             while (!resultsQueue.isEmpty()) {
-                readWriter.println(resultsQueue.poll());
+                List<String> entry = resultsQueue.poll();
+                for(String s : entry) {
+                    readWriter.println(s);
+                }
                 activeTasksCounter -= 1;
             }
         } else {
@@ -194,9 +198,10 @@ public class ExampleRepl {
                 throws IndexClosedException, InconsistentIndexException {
             try {
                 fsIndexer.add(arg);
-                resultsQueue.offer("#" + cmdNumber + "-Added: " + arg);
+                resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-Added: " + arg));
             } catch (IOException e) {
-                resultsQueue.offer("#" + cmdNumber + "-File not added: " + arg + "\nReason: " + e.getMessage());
+                resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-File not added: " +
+                                                 arg + "\nReason: " + e.getMessage()));
             }
         }
     }
@@ -210,9 +215,10 @@ public class ExampleRepl {
                 throws IndexClosedException, InconsistentIndexException {
             try {
                 fsIndexer.remove(arg);
-                resultsQueue.offer("#" + cmdNumber + "-Removed: " + arg);
+                resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-Removed: " + arg));
             } catch (IOException e) {
-                resultsQueue.offer("#" + cmdNumber + "-File not removed: " + arg + "\nReason: " + e.getMessage());
+                resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-File not removed: " +
+                                                 arg + "\nReason: " + e.getMessage()));
             }
         }
     }
@@ -224,15 +230,15 @@ public class ExampleRepl {
         @Override
         protected void runCommand()
                 throws IndexClosedException, InconsistentIndexException {
+            System.out.println("search started");
             List<String> files = fsIndexer.search(new Word(arg));
+            System.out.println("result got");
             if(files != null && files.size() != 0) {
-                String searchRes = "#" + cmdNumber + "-Files with token '" + arg + "':\n";
-                for (String f : files) {
-                    searchRes += (f + "\n");
-                }
-                resultsQueue.offer(searchRes);
+                String searchRes = "#" + cmdNumber + "-Files with token '" + arg + "':";
+                files.add(0, searchRes);
+                resultsQueue.offer(files);
             } else {
-                resultsQueue.offer("#" + cmdNumber + "-No files found");
+                resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-No files found"));
             }
         }
     }
@@ -244,7 +250,7 @@ public class ExampleRepl {
         @Override
         protected void runCommand()
                 throws IndexClosedException, InconsistentIndexException {
-            resultsQueue.offer("#" + cmdNumber + "-Contains " + arg + ": " + fsIndexer.containsFile(arg));
+            resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-Contains " + arg + ": " + fsIndexer.containsFile(arg)));
         }
     }
 }
