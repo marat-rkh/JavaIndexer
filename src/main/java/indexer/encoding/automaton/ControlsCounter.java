@@ -1,7 +1,9 @@
 package indexer.encoding.automaton;
 
 /**
- * Created by mrx on 09.10.14.
+ * Class for counting chars that are ISO controls and not whitespace chars.
+ *
+ * @see java.nio.charset.Charset
  */
 public class ControlsCounter {
     private char prev;
@@ -62,7 +64,6 @@ public class ControlsCounter {
 
     private void count(int codePoint) {
         allChars += 1;
-//        assert (Character.isDefined(codePoint) && Character.isValidCodePoint(codePoint));
         if(Character.isISOControl(codePoint) && !Character.isWhitespace(codePoint)) {
             controlsNum += 1;
         }

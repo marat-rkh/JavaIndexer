@@ -3,7 +3,9 @@ package indexer.encoding;
 import java.nio.charset.Charset;
 
 /**
- * Created by mrx on 08.10.14.
+ * Represents encoding detection result containing charset and confidence level (level of accuracy)
+ *
+ * @see indexer.encoding.EncodingDetector
  */
 public class DetectionResult {
     private final Charset charset;
