@@ -39,15 +39,11 @@ public class IndexUpdater implements IndexEventsHandler {
     public void onFilesAddedEvent(Path filePath) throws NotHandledEventException {
         final List<EncodedFile> cache = new LinkedList<>();
         final ExecutorService addersPool = Executors.newFixedThreadPool(1);
-//        if(filePath.toFile().isFile()) {
-//            cache.add(filePath.toFile().getAbsolutePath());
-//        } else {
-            try {
-                Files.walkFileTree(filePath, new AdderFileVisitor(addersPool, cache));
-            } catch (IOException e) {
-                throw new NotHandledEventException("files adding failed due to IO error, details: " + e.getMessage());
-            }
-//        }
+        try {
+            Files.walkFileTree(filePath, new AdderFileVisitor(addersPool, cache));
+        } catch (IOException e) {
+            throw new NotHandledEventException("files adding failed due to IO error, details: " + e.getMessage());
+        }
         fileIndex.addFiles(cache);
         waitAddersToFinish(addersPool);
     }
@@ -92,7 +88,6 @@ public class IndexUpdater implements IndexEventsHandler {
         private final EncodingDetector detector = EncodingDetector.standardDetector();
         private final ExecutorService addersPool;
         private final List<EncodedFile> cache;
-        private int counter = 0;
 
         private AdderFileVisitor(ExecutorService addersPool, List<EncodedFile> cache) {
             this.addersPool = addersPool;
@@ -105,7 +100,6 @@ public class IndexUpdater implements IndexEventsHandler {
             if (result != null) {
                 EncodedFile encodedFile = new EncodedFile(file.toFile().getAbsolutePath(), result.getCharset());
                 cache.add(encodedFile);
-                System.out.println(counter++);
                 if (cache.size() > ADD_FILE_CACHE_SIZE) {
                     addersPool.execute(new Adder(new LinkedList<>(cache)));
                     cache.clear();

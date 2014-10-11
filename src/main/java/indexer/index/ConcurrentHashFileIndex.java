@@ -11,8 +11,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Concurrent version of HashFileIndex. Supports multiple readers (search and contains queries) and
- * one writer (add, remove and modify queries) at a time
+ * Concurrent version of HashFileIndex. Supports multiple readers (contains queries) and
+ * one writer (add, search, remove and modify queries) at a time. Multiple search queries are
+ * not supported at a time because HashFileIndex performs lazy removes on search (and so modifies
+ * index state)
  *
  * @see indexer.index.HashFileIndex
  */
@@ -28,11 +30,11 @@ public class ConcurrentHashFileIndex implements FileIndex {
 
     @Override
     public List<String> search(Token tokenToFind) {
-        readLock.lock();
+        writeLock.lock();
         try {
             return index.search(tokenToFind);
         } finally {
-            readLock.unlock();
+            writeLock.unlock();
         }
     }
 

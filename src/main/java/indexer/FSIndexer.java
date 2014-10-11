@@ -85,7 +85,7 @@ public class FSIndexer implements AutoCloseable {
      * @throws IOException if IO errors occurred while adding
      */
     public void add(String filePath) throws IndexClosedException, InconsistentIndexException, IOException {
-        readLock.lock();
+        writeLock.lock();
         try {
             checkState();
             Path path = Paths.get(filePath);
@@ -99,7 +99,7 @@ public class FSIndexer implements AutoCloseable {
             }
             monitorsManager.addMonitor(path, MONITOR_RESTARTS_NUMBER);
         } finally {
-            readLock.unlock();
+            writeLock.unlock();
         }
     }
 
@@ -146,18 +146,6 @@ public class FSIndexer implements AutoCloseable {
         } finally {
             readLock.unlock();
         }
-    }
-
-    public IndexEventsHandler getIndexEventsHandler() {
-        return indexEventsHandler;
-    }
-
-    public FileIndex getFileIndex() {
-        return fileIndex;
-    }
-
-    public FSMonitorLifecycleHandler getFsMonitorLifecycleHandler() {
-        return fsMonitorLifecycleHandler;
     }
 
     public void close() throws IOException {

@@ -230,9 +230,7 @@ public class ExampleRepl {
         @Override
         protected void runCommand()
                 throws IndexClosedException, InconsistentIndexException {
-            System.out.println("search started");
             List<String> files = fsIndexer.search(new Word(arg));
-            System.out.println("result got");
             if(files != null && files.size() != 0) {
                 String searchRes = "#" + cmdNumber + "-Files with token '" + arg + "':";
                 files.add(0, searchRes);
