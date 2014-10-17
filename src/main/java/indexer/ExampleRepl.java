@@ -192,7 +192,7 @@ public class ExampleRepl {
         userWaitsResult.set(true);
         execThread.start();
         while (userWaitsResult.get() && !lastCommandRunner.resultsPrintedForUser()) {
-            readWriter.println("...Waiting results (to watch them later press ';' + Enter)");
+            readWriter.println("...Waiting results (to watch them later press ';' and Enter)");
             readWriter.readLine();
         }
         userWaitsResult.set(false);
