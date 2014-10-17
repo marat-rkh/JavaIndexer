@@ -5,6 +5,7 @@ import jline.console.completer.ArgumentCompleter;
 import jline.console.completer.Completer;
 import jline.console.completer.FileNameCompleter;
 
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +14,8 @@ import java.util.List;
  * Created by mrx on 04.10.14.
  */
 public class ConsoleReadWriter implements ReadWriter {
-    private ConsoleReader console = null;
+    private final ConsoleReader console;
+    private final String PROMPT = "\n$Enter command: ";
 
     public ConsoleReadWriter() throws Exception {
         console = new ConsoleReader();
@@ -22,11 +24,18 @@ public class ConsoleReadWriter implements ReadWriter {
         ArgumentCompleter argumentCompleter = new ArgumentCompleter(completers);
         argumentCompleter.setStrict(false);
         console.addCompleter(argumentCompleter);
-        console.setPrompt("\n$Enter command: ");
+        console.setPrompt(PROMPT);
+    }
+    @Override
+    public String interact() throws IOException {
+        return console.readLine();
     }
     @Override
     public String readLine() throws IOException {
-        return console.readLine();
+        console.setPrompt("");
+        String line = console.readLine();
+        console.setPrompt(PROMPT);
+        return line;
     }
     @Override
     public void println(String msg) throws IOException {
@@ -44,5 +53,10 @@ public class ConsoleReadWriter implements ReadWriter {
             console.getTerminal().restore();
             console.shutdown();
         }
+    }
+
+    @Override
+    public void addCharListener(final CharSequence c, final ActionListener listener) {
+        console.getKeys().bind(c, listener);
     }
 }

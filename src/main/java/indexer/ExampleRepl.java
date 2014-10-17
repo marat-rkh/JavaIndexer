@@ -5,10 +5,12 @@ import indexer.exceptions.IndexClosedException;
 import indexer.tokenizer.Word;
 import indexer.utils.ReadWriter;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -22,16 +24,30 @@ public class ExampleRepl {
     private final AtomicInteger lastCommandId = new AtomicInteger(0);
     private int activeTasksCounter = 0;
 
+    private AtomicBoolean userWaitsResult = new AtomicBoolean(false);
+    private UserWaitingCommandRunner lastCommandRunner = null;
+
     private boolean isInconsistentIndexException = false;
     private String inconsistentIndexMsg = "";
     private boolean isIndexClosedException = false;
+    private boolean isIoException = false;
+    private String ioExceptionMsg = null;
     private String postponedExceptionMessage = null;
-    
+
     private ReadWriter readWriter = null;
 
-    public ExampleRepl(FSIndexer fsIndexer, ReadWriter readWriter) throws Exception {
+    public ExampleRepl(FSIndexer fsIndexer, final ReadWriter readWriter) throws Exception {
         this.fsIndexer = fsIndexer;
         this.readWriter = readWriter;
+        this.readWriter.addCharListener(";", new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                userWaitsResult.set(false);
+                if(lastCommandRunner != null) {
+                    lastCommandRunner.setUserDoesntWait();
+                }
+            }
+        });
     }
 
     public void start() {
@@ -78,26 +94,22 @@ public class ExampleRepl {
     private void handleTwoArgCommands(String[] command) throws IOException {
         Thread execThread = null;
         if(command[0].equals("a")) {
-            execThread = new Thread(new AddCommandRunner(lastCommandId.incrementAndGet(),
-                    command[0], command[1].trim()));
+            lastCommandRunner = new AddCommandRunner(lastCommandId.incrementAndGet(), command[0], command[1].trim());
+            execThread = new Thread(lastCommandRunner);
         } else if(command[0].equals("r")) {
-            execThread = new Thread(new RemoveCommandRunner(lastCommandId.incrementAndGet(),
-                    command[0], command[1].trim()));
+            lastCommandRunner = new RemoveCommandRunner(lastCommandId.incrementAndGet(), command[0], command[1].trim());
+            execThread = new Thread(lastCommandRunner);
         } else if(command[0].equals("s")) {
-            execThread = new Thread(new SearchCommandRunner(lastCommandId.incrementAndGet(),
-                    command[0], command[1].trim()));
+            lastCommandRunner = new SearchCommandRunner(lastCommandId.incrementAndGet(), command[0], command[1].trim());
+            execThread = new Thread(lastCommandRunner);
         } else if(command[0].equals("c")) {
-            execThread = new Thread(new ContainsCommandRunner(lastCommandId.incrementAndGet(),
-                    command[0], command[1].trim()));
+            lastCommandRunner = new ContainsCommandRunner(lastCommandId.incrementAndGet(), command[0], command[1].trim());
+            execThread = new Thread(lastCommandRunner);
         } else {
             printUnknownCommandMsg();
         }
         if(execThread != null) {
-            execThread.setName("#" + lastCommandId.get() + "-" + command[0] + " " + command[1]);
-            execThread.start();
-            execThreads.add(execThread);
-            activeTasksCounter += 1;
-            printCollectedResults();
+            execute(command, execThread);
         }
     }
 
@@ -119,6 +131,8 @@ public class ExampleRepl {
             throw new Exception("Inconsistent index error, details: " + inconsistentIndexMsg);
         } else if(isIndexClosedException) {
             throw new Exception("Strange situation - index has been closed");
+        } else if(isIoException) {
+            throw new Exception("Error occurred while printing command results, details: " + ioExceptionMsg);
         }
     }
 
@@ -133,7 +147,7 @@ public class ExampleRepl {
     }
 
     private String[] readCommand() throws IOException {
-        String input = readWriter.readLine();
+        String input = readWriter.interact();
         return input == null ? null : input.replace(" +", " ").trim().split(" ", 2);
     }
 
@@ -170,6 +184,20 @@ public class ExampleRepl {
         readWriter.println("Total: " + activeTasksNum);
     }
 
+    private void execute(String[] command, Thread execThread) throws IOException {
+        execThread.setName("#" + lastCommandId.get() + "(" + command[0] + " " + command[1] + ")");
+        execThreads.add(execThread);
+        activeTasksCounter += 1;
+
+        userWaitsResult.set(true);
+        execThread.start();
+        while (userWaitsResult.get() && !lastCommandRunner.resultsPrintedForUser()) {
+            readWriter.println("...Waiting results (to watch them later press ';' + Enter)");
+            readWriter.readLine();
+        }
+        userWaitsResult.set(false);
+    }
+
     private void releaseResources() {
         for(Thread et : execThreads) {
             try {
@@ -180,14 +208,16 @@ public class ExampleRepl {
     }
 
     private abstract class AsyncCommandRunner implements Runnable {
-        protected final int cmdNumber;
-        protected final String cmd;
-        protected final String arg;
+        protected final int CMD_NUMBER;
+        protected final String CMD;
+        protected final String ARG;
+        protected final String CMD_DESCRIPTION;
 
         public AsyncCommandRunner(int cmdNumber, String cmd, String arg) {
-            this.cmdNumber = cmdNumber;
-            this.cmd = cmd;
-            this.arg = arg;
+            this.CMD_NUMBER = cmdNumber;
+            this.CMD = cmd;
+            this.ARG = arg;
+            this.CMD_DESCRIPTION = "\n#" + CMD_NUMBER + "(" + CMD + " " + ARG + ")";
         }
 
         @Override
@@ -205,7 +235,38 @@ public class ExampleRepl {
         protected abstract void runCommand() throws IndexClosedException, InconsistentIndexException;
     }
 
-    private class AddCommandRunner extends AsyncCommandRunner {
+    private abstract class UserWaitingCommandRunner extends AsyncCommandRunner {
+        protected boolean userWaitsForResult = true;
+        protected boolean printingResultsFinished = false;
+
+        public UserWaitingCommandRunner(int cmdNumber, String cmd, String arg) {
+            super(cmdNumber, cmd, arg);
+        }
+
+        protected void printOrEnqueue(List<String> results) {
+            if(userWaitsForResult) {
+                try {
+                    for (String r : results) {
+                        readWriter.println(r);
+                    }
+                    readWriter.print("\n...All results are received, press Enter to continue");
+                } catch (IOException e) {
+                    isIoException = true;
+                    ioExceptionMsg = e.getMessage();
+                } finally {
+                    printingResultsFinished = true;
+                    activeTasksCounter -= 1;
+                }
+            } else {
+                resultsQueue.offer(results);
+            }
+        }
+
+        public void setUserDoesntWait() { userWaitsForResult = false; }
+        public boolean resultsPrintedForUser() { return printingResultsFinished; }
+    }
+
+    private class AddCommandRunner extends UserWaitingCommandRunner {
         public AddCommandRunner(int cmdNumber, String cmd, String arg) {
             super(cmdNumber, cmd, arg);
         }
@@ -213,16 +274,15 @@ public class ExampleRepl {
         protected void runCommand()
                 throws IndexClosedException, InconsistentIndexException {
             try {
-                fsIndexer.add(arg);
-                resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-Added: " + arg));
+                fsIndexer.add(ARG);
+                printOrEnqueue(Arrays.asList(CMD_DESCRIPTION + "-Added"));
             } catch (IOException e) {
-                resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-File not added: " +
-                                                 arg + "\nReason: " + e.getMessage()));
+                printOrEnqueue(Arrays.asList(CMD_DESCRIPTION + "-File not added \nReason: " + e.getMessage()));
             }
         }
     }
 
-    private class RemoveCommandRunner extends AsyncCommandRunner {
+    private class RemoveCommandRunner extends UserWaitingCommandRunner {
         public RemoveCommandRunner(int cmdNumber, String cmd, String arg) {
             super(cmdNumber, cmd, arg);
         }
@@ -230,41 +290,40 @@ public class ExampleRepl {
         protected void runCommand()
                 throws IndexClosedException, InconsistentIndexException {
             try {
-                fsIndexer.remove(arg);
-                resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-Removed: " + arg));
+                fsIndexer.remove(ARG);
+                printOrEnqueue(Arrays.asList(CMD_DESCRIPTION + "-Removed"));
             } catch (IOException e) {
-                resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-File not removed: " +
-                                                 arg + "\nReason: " + e.getMessage()));
+                printOrEnqueue(Arrays.asList(CMD_DESCRIPTION + "-File not removed \nReason: " + e.getMessage()));
             }
         }
     }
 
-    private class SearchCommandRunner extends AsyncCommandRunner {
+    private class SearchCommandRunner extends UserWaitingCommandRunner {
         public SearchCommandRunner(int cmdNumber, String cmd, String arg) {
             super(cmdNumber, cmd, arg);
         }
         @Override
         protected void runCommand()
                 throws IndexClosedException, InconsistentIndexException {
-            List<String> files = fsIndexer.search(new Word(arg));
+            List<String> files = fsIndexer.search(new Word(ARG));
             if(files != null && files.size() != 0) {
-                String searchRes = "#" + cmdNumber + "-Files with token '" + arg + "':";
+                String searchRes = CMD_DESCRIPTION + "-Files with token '" + ARG + "':";
                 files.add(0, searchRes);
-                resultsQueue.offer(files);
+                printOrEnqueue(files);
             } else {
-                resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-No files found"));
+                printOrEnqueue(Arrays.asList(CMD_DESCRIPTION + "-No files found"));
             }
         }
     }
 
-    private class ContainsCommandRunner extends AsyncCommandRunner {
+    private class ContainsCommandRunner extends UserWaitingCommandRunner {
         public ContainsCommandRunner(int cmdNumber, String cmd, String arg) {
             super(cmdNumber, cmd, arg);
         }
         @Override
         protected void runCommand()
                 throws IndexClosedException, InconsistentIndexException {
-            resultsQueue.offer(Arrays.asList("#" + cmdNumber + "-Contains " + arg + ": " + fsIndexer.containsFile(arg)));
+            printOrEnqueue(Arrays.asList(CMD_DESCRIPTION + "-Contains: " + fsIndexer.containsFile(ARG)));
         }
     }
 }
