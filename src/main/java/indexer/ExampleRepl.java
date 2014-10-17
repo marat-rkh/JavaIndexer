@@ -63,6 +63,8 @@ public class ExampleRepl {
             printCollectedResults();
         } else if(command[0].equals("h")) {
             showHelp();
+        } else if(command[0].equals("t")) {
+            showActiveTasks();
         } else if(command[0].equals("q")) {
             return false;
         } else if(command.length >= 2) {
@@ -91,6 +93,7 @@ public class ExampleRepl {
             printUnknownCommandMsg();
         }
         if(execThread != null) {
+            execThread.setName("#" + lastCommandId.get() + "-" + command[0] + " " + command[1]);
             execThread.start();
             execThreads.add(execThread);
             activeTasksCounter += 1;
@@ -105,6 +108,7 @@ public class ExampleRepl {
                 "s <word>             - get list of files containing <word>\n" +
                 "c <file_path>        - check if index contains file\n" +
                 "p                    - show previous commands results\n" +
+                "t                    - show active tasks\n" +
                 "h                    - show this help\n" +
                 "q                    - finish work";
         readWriter.println(help);
@@ -152,6 +156,18 @@ public class ExampleRepl {
 
     private void printUnknownCommandMsg() throws IOException {
         readWriter.println("Unknown command");
+    }
+
+    private void showActiveTasks() throws IOException {
+        readWriter.println("Active tasks:");
+        int activeTasksNum = 0;
+        for(Thread et : execThreads) {
+            if(et.isAlive()) {
+                activeTasksNum += 1;
+                readWriter.println(et.getName());
+            }
+        }
+        readWriter.println("Total: " + activeTasksNum);
     }
 
     private void releaseResources() {
