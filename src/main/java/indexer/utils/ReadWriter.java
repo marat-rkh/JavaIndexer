@@ -12,5 +12,4 @@ public interface ReadWriter extends AutoCloseable {
     public void println(String msg) throws IOException;
     public void print(String msg) throws IOException;
     public void close() throws Exception;
-    public void addCharListener(final CharSequence c, final ActionListener listener);
 }

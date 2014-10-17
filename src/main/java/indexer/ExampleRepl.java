@@ -24,7 +24,6 @@ public class ExampleRepl {
     private final AtomicInteger lastCommandId = new AtomicInteger(0);
     private int activeTasksCounter = 0;
 
-    private AtomicBoolean userWaitsResult = new AtomicBoolean(false);
     private UserWaitingCommandRunner lastCommandRunner = null;
 
     private boolean isInconsistentIndexException = false;
@@ -39,15 +38,6 @@ public class ExampleRepl {
     public ExampleRepl(FSIndexer fsIndexer, final ReadWriter readWriter) throws Exception {
         this.fsIndexer = fsIndexer;
         this.readWriter = readWriter;
-        this.readWriter.addCharListener(";", new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                userWaitsResult.set(false);
-                if(lastCommandRunner != null) {
-                    lastCommandRunner.setUserDoesntWait();
-                }
-            }
-        });
     }
 
     public void start() {
@@ -189,13 +179,13 @@ public class ExampleRepl {
         execThreads.add(execThread);
         activeTasksCounter += 1;
 
-        userWaitsResult.set(true);
         execThread.start();
-        while (userWaitsResult.get() && !lastCommandRunner.resultsPrintedForUser()) {
-            readWriter.println("...Waiting results (to watch them later press ';' and Enter)");
-            readWriter.readLine();
+        String userInput = "";
+        while (!userInput.equals("l") && !lastCommandRunner.resultsPrintedForUser()) {
+            readWriter.println("...Waiting results (to watch them later enter 'l'): ");
+            userInput = readWriter.readLine();
         }
-        userWaitsResult.set(false);
+        lastCommandRunner.setUserDoesntWait();
     }
 
     private void releaseResources() {
@@ -249,7 +239,7 @@ public class ExampleRepl {
                     for (String r : results) {
                         readWriter.println(r);
                     }
-                    readWriter.print("\n...All results are received, press Enter to continue");
+                    readWriter.println("\n...All results are received, press Enter to continue");
                 } catch (IOException e) {
                     isIoException = true;
                     ioExceptionMsg = e.getMessage();

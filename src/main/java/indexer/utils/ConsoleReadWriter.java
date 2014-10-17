@@ -54,9 +54,4 @@ public class ConsoleReadWriter implements ReadWriter {
             console.shutdown();
         }
     }
-
-    @Override
-    public void addCharListener(final CharSequence c, final ActionListener listener) {
-        console.getKeys().bind(c, listener);
-    }
 }
