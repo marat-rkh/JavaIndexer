@@ -13,7 +13,7 @@ public class ConsoleLogger implements Logger {
     }
 
     @Override
-    public void log(String msg) throws IOException {
+    public synchronized void log(String msg) throws IOException {
         readWriter.println("\n" + msg);
     }
 }
