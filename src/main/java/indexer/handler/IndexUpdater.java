@@ -64,7 +64,11 @@ public class IndexUpdater implements IndexEventsHandler {
             DetectionResult result = EncodingDetector.standardDetector().detect(file.getAbsolutePath());
             if(result != null) {
                 EncodedFile encodedFile = new EncodedFile(file.getAbsolutePath(), result.getCharset());
-                fileIndex.handleFileModification(encodedFile);
+                if(fileIndex.containsFile(encodedFile.getFilePath())) {
+                    fileIndex.handleFileModification(encodedFile);
+                } else {
+                    fileIndex.addFile(encodedFile);
+                }
             } else {
                 fileIndex.removeFile(file.getAbsolutePath());
             }
