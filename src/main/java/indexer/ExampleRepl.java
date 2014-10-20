@@ -47,6 +47,9 @@ public class ExampleRepl {
                 checkState();
                 removeStoppedThreads();
                 String[] command = readCommand();
+                if(command != null && command.length == 1 && command[0].equals("")) {
+                    continue;
+                }
                 if (command == null || !handleCommand(command)) {
                     readWriter.println("Waiting active tasks to complete...");
                     return;
