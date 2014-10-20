@@ -82,9 +82,6 @@ public class FSIndexer implements AutoCloseable {
         } catch (NotHandledEventException e) {
             throw new IOException("IO errors occurred while adding, details: " + e.getMessage());
         }
-        if(!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-            path = path.getParent();
-        }
         monitorsManager.addMonitor(path, MONITOR_RESTARTS_NUMBER);
     }
 
@@ -103,9 +100,6 @@ public class FSIndexer implements AutoCloseable {
             indexEventsHandler.onFilesRemovedEvent(path);
         } catch (NotHandledEventException e) {
             throw new IOException("IO errors occurred while removing, details: " + e.getMessage());
-        }
-        if(!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-            path = path.getParent();
         }
         monitorsManager.removeMonitor(path);
     }

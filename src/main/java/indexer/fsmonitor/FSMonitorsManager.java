@@ -6,14 +6,13 @@ import indexer.utils.Logger;
 import indexer.utils.PathUtils;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Class represents FSMonitors manager. It can add and start monitors for different folders
+ * Class represents FSMonitors manager. It can add and start monitors for different folders and files
  * in separate threads, stop and remove them and try to restart monitors if they are failed
  * using FSMonitorLifecycleHandler to make appropriate changes on this events.
  * All operations are thread safe, only one adding or removing can be performed at a time.
@@ -37,22 +36,23 @@ public class FSMonitorsManager {
     }
 
     /**
-     * Synchronously adds and starts new monitor for specified folder with eventsHandler passed
-     * in constructor. Monitor is restarted {@code restartsCounter} times on fail before it is
+     * Synchronously adds and starts new monitor for specified folder or file with eventsHandler passed
+     * in constructor. Monitor is restarted {@code restartsCounter} times on fail before being
      * completely stopped.
      *
-     * @param directory directory to listen with new monitor
+     * @param target directory or file to listen with new monitor
      * @param restartsCounter number of times monitor is restarted on fail
      * @return                {@code true} if monitor has been added and started or if monitoring
-     *                        is not needed because passed directory is already watched by some monitor
+     *                        is not needed because passed target is already watched by some monitor
      *                        {@code false} if some errors occurred on monitor creation
      * @throws IOException
      */
-    public synchronized boolean addMonitor(Path directory, int restartsCounter) throws IOException {
-        if(addingIsNeeded(directory)) {
+    public synchronized boolean addMonitor(Path target, int restartsCounter) throws IOException {
+        if(addingIsNeeded(target)) {
             try {
-                FSMonitor newMonitor = new SingleDirMonitor(directory, indexEventsHandler, logger);
-                monitors.put(directory, newMonitor);
+                FSMonitor newMonitor = new DirMonitor(target, indexEventsHandler, logger,
+                                                      new RootMonitorHandler(this));
+                monitors.put(target, newMonitor);
                 Thread monitorThread = new Thread(new MonitorRunner(newMonitor, restartsCounter));
                 monitorThread.start();
                 return true;
@@ -64,19 +64,19 @@ public class FSMonitorsManager {
     }
 
     /**
-     * Synchronously stops and removes monitor for specified directory
+     * Synchronously stops and removes monitor for specified target
      *
-     * @param directory directory to be stopped listening
-     * @return          {@code true} if directory's monitor has been removed
-     *                  {@code false} if no monitor exactly for specified directory (but some enclosing
+     * @param target directory or file to be stopped listening
+     * @return          {@code true} if target's monitor has been removed
+     *                  {@code false} if no monitor exactly for specified target (but some enclosing
      *                  monitor can present)
      * @throws IOException if IO errors occurred while stopping monitor
      */
-    public synchronized boolean removeMonitor(Path directory) throws IOException {
-        FSMonitor monitor = monitors.get(directory);
+    public synchronized boolean removeMonitor(Path target) throws IOException {
+        FSMonitor monitor = monitors.get(target);
         if(monitor != null) {
             monitor.stopMonitoring();
-            monitors.remove(directory);
+            monitors.remove(target);
             return true;
         }
         return false;
@@ -135,10 +135,10 @@ public class FSMonitorsManager {
                 restartsCounter -= 1;
                 try {
                     if (restartsCounter >= 0) {
-                        monitorLifecycleHandler.onMonitorRestart(monitor.getDirectory());
+                        monitorLifecycleHandler.onMonitorRestart(monitor.getTarget());
                         run();
                     } else {
-                        monitorLifecycleHandler.onMonitorDown(monitor.getDirectory());
+                        monitorLifecycleHandler.onMonitorDown(monitor.getTarget());
                     }
                 } catch (NotHandledEventException ex) {
                     errorOccurred = true;

@@ -8,11 +8,11 @@ import java.io.File;
 
 import static org.junit.Assert.*;
 
-public class SingleDirMonitorTest extends TmpFsCreator {
+public class DirContentMonitorTest extends TmpFsCreator {
     @Test
     public void testAddFileMonitoring() throws Exception {
         TestEventsHandler handler = new TestEventsHandler();
-        FSMonitor monitor = new SingleDirMonitor(dir1.toPath(), handler);
+        FSMonitor monitor = new DirContentMonitor(dir1.toPath(), handler);
         startMonitorThread(monitor);
         Thread.sleep(5000);
         File addedFile = File.createTempFile("addedFile", "", dir1);
@@ -28,7 +28,7 @@ public class SingleDirMonitorTest extends TmpFsCreator {
     @Test
     public void testAddDirMonitoring() throws Exception {
         TestEventsHandler handler = new TestEventsHandler();
-        FSMonitor monitor = new SingleDirMonitor(tempFolder.getRoot().toPath(), handler);
+        FSMonitor monitor = new DirContentMonitor(tempFolder.getRoot().toPath(), handler);
         startMonitorThread(monitor);
         Thread.sleep(5000);
         File addedDir = tempFolder.newFolder("addedDir");
@@ -44,7 +44,7 @@ public class SingleDirMonitorTest extends TmpFsCreator {
     @Test
     public void testRemoveMonitoring() throws Exception {
         TestEventsHandler handler = new TestEventsHandler();
-        FSMonitor monitor = new SingleDirMonitor(tempFolder.getRoot().toPath(), handler);
+        FSMonitor monitor = new DirContentMonitor(tempFolder.getRoot().toPath(), handler);
         startMonitorThread(monitor);
         Thread.sleep(5000);
         if(!file1.delete() || !file2.delete()) {
@@ -61,7 +61,7 @@ public class SingleDirMonitorTest extends TmpFsCreator {
     @Test
     public void testModifyMonitoring() throws Exception {
         TestEventsHandler handler = new TestEventsHandler();
-        FSMonitor monitor = new SingleDirMonitor(tempFolder.getRoot().toPath(), handler);
+        FSMonitor monitor = new DirContentMonitor(tempFolder.getRoot().toPath(), handler);
         startMonitorThread(monitor);
         Thread.sleep(5000);
         appendTextToFile(file1, "some text");
