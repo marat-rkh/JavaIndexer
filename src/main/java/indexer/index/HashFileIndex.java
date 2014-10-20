@@ -187,7 +187,6 @@ public class HashFileIndex implements FileIndex {
         filesIdIt.remove();
         fileEntry.decreaseTokensCounter();
         if(fileEntry.getTokensCounter() <= 0) {
-            fileIdMap.remove(fileEntry.getFilePath());
             idFileMap.remove(fileId);
         }
     }
